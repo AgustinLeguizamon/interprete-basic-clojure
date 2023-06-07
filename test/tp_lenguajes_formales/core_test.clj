@@ -2,6 +2,9 @@
   (:require [clojure.test :refer :all]
             [tp-lenguajes-formales.core :refer :all]))
 
-(deftest a-test
-  (testing "FIXME, I fail."
-    (is (= 0 1))))
+(deftest cargar-linea-test
+  (testing "Prueba de la funcion: cargar-linea"
+    (is (= (cargar-linea '(10 (PRINT X)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}]) '[((10 (PRINT X))) [:ejecucion-inmediata 0] [] [] [] 0 {}]))
+    (is (= (cargar-linea '(20 (X = 100)) '[((10 (PRINT X))) [:ejecucion-inmediata 0] [] [] [] 0 {}]) '[((10 (PRINT X)) (20 (X = 100))) [:ejecucion-inmediata 0] [] [] [] 0 {}]))
+    
+    ))
