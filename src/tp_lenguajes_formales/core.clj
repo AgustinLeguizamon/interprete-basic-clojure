@@ -1,5 +1,8 @@
 (ns tp-lenguajes-formales.core
-  (:gen-class))
+  (:gen-class)
+  (:require [clojure.string :as str]))
+
+(require '[clojure.string :as str])
 
 (declare driver-loop)                     ; NO TOCAR
 (declare string-a-tokens)                 ; NO TOCAR
@@ -693,7 +696,48 @@
 ; user=> (expandir-nexts n)
 ; ((PRINT 1) (NEXT A) (NEXT B))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn expandir-nexts [n])
+
+(comment
+  (def n (list '(PRINT 1) (list 'NEXT 'A (symbol ",") 'B)))
+
+  (def sentencia (list 'NEXT 'A (symbol ",") 'B))
+
+  sentencia
+
+
+  
+
+  
+  (expandir-nexts (list '(PRINT 1) (list 'NEXT 'A (symbol ",") 'B)))
+  (expandir-nexts (list '(PRINT X + 10) (list 'NEXT 'A (symbol ",") 'B) (list 'NEXT 'C (symbol ",") 'D)))
+  (expandir-nexts (list '(PRINT X + 10) (list 'NEXT 'A)))
+  
+  
+  :rcf)
+
+(defn in?
+  "true if coll contains elm"
+  [coll elm]
+  (some #(= elm %) coll))
+
+(defn crear-lista-con-next [x]
+  (list 'NEXT x))
+
+(defn no-es-coma? [x]
+  (not (= (symbol ",") x)))
+
+(defn expandir-sentencia-con-next [n]
+  (map crear-lista-con-next (filter no-es-coma? n)))
+
+(defn expandir-sentencia-si-tiene-next [n]
+  (if (and (= 'NEXT (first n)) (in? n (symbol ","))) (expandir-sentencia-con-next (rest n)) n))
+
+(defn expandir-nexts [n]
+  (cond
+    (empty? n) n
+    (= 'NEXT (first (first n))) (concat (expandir-sentencia-con-next (rest (first n))) (expandir-nexts (rest n)))
+    :else (concat (list (first n)) (expandir-nexts (rest n)))
+    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; dar-error: recibe un error (codigo o mensaje) y el puntero de 
@@ -761,7 +805,23 @@
 ; user=> (contar-sentencias 20 [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [10 1] [] [] [] 0 {}])
 ; 2
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn contar-sentencias [nro-linea amb])
+(comment
+
+
+  (def amb [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [10 1] [] [] [] 0 {}])
+
+
+
+  (count (expandir-nexts (next (first (filter (partial iguales? 20) (nth amb 0)))))) 
+
+  (contar-sentencias 10 amb)
+  (contar-sentencias 15 amb)
+  (contar-sentencias 20 amb)
+
+  :rcf)
+
+(defn contar-sentencias [nro-linea amb]
+  (count (expandir-nexts (next (first (filter (partial iguales? nro-linea) (nth amb 0)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; buscar-lineas-restantes: recibe un ambiente y retorna la
