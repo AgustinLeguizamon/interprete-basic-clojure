@@ -2,8 +2,6 @@
   (:gen-class)
   (:require [clojure.string :as str]))
 
-(require '[clojure.string :as str])
-
 (declare driver-loop)                     ; NO TOCAR
 (declare string-a-tokens)                 ; NO TOCAR
 (declare evaluar-linea)                   ; NO TOCAR
@@ -705,14 +703,14 @@
   sentencia
 
 
-  
 
-  
+
+
   (expandir-nexts (list '(PRINT 1) (list 'NEXT 'A (symbol ",") 'B)))
   (expandir-nexts (list '(PRINT X + 10) (list 'NEXT 'A (symbol ",") 'B) (list 'NEXT 'C (symbol ",") 'D)))
   (expandir-nexts (list '(PRINT X + 10) (list 'NEXT 'A)))
-  
-  
+
+
   :rcf)
 
 (defn in?
@@ -736,8 +734,7 @@
   (cond
     (empty? n) n
     (= 'NEXT (first (first n))) (concat (expandir-sentencia-con-next (rest (first n))) (expandir-nexts (rest n)))
-    :else (concat (list (first n)) (expandir-nexts (rest n)))
-    ))
+    :else (concat (list (first n)) (expandir-nexts (rest n)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; dar-error: recibe un error (codigo o mensaje) y el puntero de 
@@ -812,7 +809,7 @@
 
 
 
-  (count (expandir-nexts (next (first (filter (partial iguales? 20) (nth amb 0)))))) 
+  (count (expandir-nexts (next (first (filter (partial iguales? 20) (nth amb 0))))))
 
   (contar-sentencias 10 amb)
   (contar-sentencias 15 amb)
@@ -879,7 +876,44 @@
 ; user=> (extraer-data (list '(10 (PRINT X) (REM ESTE NO) (DATA 30)) '(20 (DATA HOLA)) (list 100 (list 'DATA 'MUNDO (symbol ",") 10 (symbol ",") 20))))
 ; ("HOLA" "MUNDO" 10 20)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn extraer-data [prg])
+
+(comment
+
+  (def _prg (list '(10 (PRINT X) (REM ESTE NO) (DATA 30)) '(20 (DATA HOLA)) (list 100 (list 'DATA 'MUNDO (symbol ",") 10 (symbol ",") 20))))
+
+  (def _linea '(10 (PRINT X) (REM ESTE NO) (DATA 30)))
+
+  (extraer-data-sentencia (list 'DATA 'MUNDO (symbol ",") 10 (symbol ",") 20))
+  (extraer-data-sentencia '(DATA 30))
+  (extraer-data-sentencia '(DATA HOLA))
+
+  (extraer-data-linea (rest _linea))
+  (extraer-data-linea (rest '(20 (DATA HOLA))))
+  (extraer-data-linea (rest (list 100 (list 'DATA 'MUNDO (symbol ",") 10 (symbol ",") 20))))
+
+  (extraer-data _prg)
+  (extraer-data '(()))
+
+  :rcf)
+
+(defn stringify [x]
+  (if (number? x) x (str x)))
+
+(defn data? [x]
+  (= 'DATA x))
+
+(defn extraer-data-sentencia [sentencia]
+  (map stringify (filter #(not (data? %1)) (filter no-es-coma? sentencia))))
+
+(defn extraer-data-linea [linea]
+  (cond
+    (empty? linea) linea
+    (= 'REM (first (first linea))) '()
+    (= 'DATA (first (first linea))) (cons (extraer-data-sentencia (first linea)) (extraer-data-linea (rest linea)))
+    :else (extraer-data-linea (rest linea))))
+
+(defn extraer-data [prg]
+  (flatten (map #(extraer-data-linea (rest %1)) prg)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; ejecutar-asignacion: recibe una asignacion y un ambiente, y
