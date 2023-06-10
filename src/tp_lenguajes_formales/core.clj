@@ -859,22 +859,45 @@
 
   ; obtener sentencia a partir de linea
   (def _lineas (list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))))
-  (def _linea '(10 (PRINT X) (PRINT Y)))
+
+  (remover-lineas-hasta 10  _lineas)
+  (remover-lineas-hasta 15  _lineas)
+  (remover-lineas-hasta 20  _lineas)
+  (remover-lineas-hasta 25  _lineas)
 
   (obtener-nro-linea [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  (obtener-cant-sentencias-restantes [() [:ejecucion-inmediata 0] [] [] [] 0 {}]) 
+  (obtener-cant-sentencias-restantes [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
 
   (buscar-lineas-restantes [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+
+  (expandir-nexts (rest (nth _lineas 2)))
 
   (obtener-lineas-amb _amb)
   (obtener-nro-linea _amb)
   (obtener-cant-sentencias-restantes _amb)
+
+
+  (seleccionar-sentencias-2 2 (first _lineas))
+  (seleccionar-sentencias-2 1 (first _lineas))
+  (seleccionar-sentencias-2 0 (first _lineas))
+
 
   (buscar-lineas-restantes [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
   (buscar-lineas-restantes ['((PRINT X) (PRINT Y)) [:ejecucion-inmediata 2] [] [] [] 0 {}])
   (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [10 2] [] [] [] 0 {}])
   (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [10 1] [] [] [] 0 {}])
   (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [10 0] [] [] [] 0 {}])
+
+  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [15 1] [] [] [] 0 {}])
+  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [15 0] [] [] [] 0 {}])
+  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [] [] [] 0 {}])
+  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 2] [] [] [] 0 {}])
+
+  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 1] [] [] [] 0 {}])
+
+  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 0] [] [] [] 0 {}])
+  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 -1] [] [] [] 0 {}])
+  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [25 0] [] [] [] 0 {}])
 
   :rcf)
 
@@ -887,23 +910,39 @@
 (defn obtener-lineas-amb [amb]
   (nth amb 0))
 
-;; busco la linea (guardo el resultado en un let)
+;; busco la linea
 (defn buscar-linea [nro-linea lineas-amb]
   (first (filter (partial iguales? nro-linea) lineas-amb)))
 
 ;; modifico la linea removida
 (defn seleccionar-sentencias [cant-sentencias-restantes, linea]
-  (take (inc cant-sentencias-restantes) linea))
+  (take (if (neg? cant-sentencias-restantes) 1 (inc cant-sentencias-restantes))  (cons (first linea) (expandir-nexts (rest linea)))))
+
+(defn seleccionar-sentencias-2 [cant-sentencias-restantes, linea]
+  (cons (first linea) (reverse (take (if (neg? cant-sentencias-restantes) 0 cant-sentencias-restantes)  (reverse (expandir-nexts (rest linea)))))))
+
+(defn buscar-lineas-restantes-2 [amb]
+  (let
+   [nro-linea (obtener-nro-linea amb)]
+    (cond
+      (not (number? nro-linea)) nil
+      :else (first (cargar-linea (seleccionar-sentencias-2 (obtener-cant-sentencias-restantes amb) (buscar-linea nro-linea (obtener-lineas-amb amb))) amb)))))
+
+(defn remover-lineas-hasta [nro-linea lineas-amb]
+  (cond
+    (empty? lineas-amb) lineas-amb
+    (= nro-linea (first (first lineas-amb))) lineas-amb
+    :else (remover-lineas-hasta nro-linea (rest lineas-amb))))
 
 (defn buscar-lineas-restantes [amb]
   (let
-   [nro-linea (obtener-nro-linea amb)
-    ]
+   [puntero_linea (obtener-nro-linea amb),
+    lineas-amb (obtener-lineas-amb amb),
+    lineas-restantes (remover-lineas-hasta puntero_linea lineas-amb)]
     (cond
-      (not (number? nro-linea)) nil
-      :else (first (cargar-linea (seleccionar-sentencias (obtener-cant-sentencias-restantes amb) (buscar-linea nro-linea (obtener-lineas-amb amb))) amb)))
-    )
-  )
+      (not (number? puntero_linea)) nil
+      (empty? lineas-restantes) nil
+      :else (cons (seleccionar-sentencias-2 (obtener-cant-sentencias-restantes amb) (first lineas-restantes)) (rest lineas-restantes)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; continuar-linea: implementa la sentencia RETURN, retornando una
