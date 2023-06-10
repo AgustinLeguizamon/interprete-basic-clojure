@@ -852,7 +852,58 @@
 ; user=> (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [25 0] [] [] [] 0 {}])
 ; nil
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn buscar-lineas-restantes [amb])
+
+(comment
+
+  (def _amb [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [10 2] [] [] [] 0 {}])
+
+  ; obtener sentencia a partir de linea
+  (def _lineas (list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))))
+  (def _linea '(10 (PRINT X) (PRINT Y)))
+
+  (obtener-nro-linea [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  (obtener-cant-sentencias-restantes [() [:ejecucion-inmediata 0] [] [] [] 0 {}]) 
+
+  (buscar-lineas-restantes [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+
+  (obtener-lineas-amb _amb)
+  (obtener-nro-linea _amb)
+  (obtener-cant-sentencias-restantes _amb)
+
+  (buscar-lineas-restantes [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  (buscar-lineas-restantes ['((PRINT X) (PRINT Y)) [:ejecucion-inmediata 2] [] [] [] 0 {}])
+  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [10 2] [] [] [] 0 {}])
+  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [10 1] [] [] [] 0 {}])
+  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [10 0] [] [] [] 0 {}])
+
+  :rcf)
+
+(defn obtener-nro-linea [amb]
+  (first (nth amb 1)))
+
+(defn obtener-cant-sentencias-restantes [amb]
+  (second (nth amb 1)))
+
+(defn obtener-lineas-amb [amb]
+  (nth amb 0))
+
+;; busco la linea (guardo el resultado en un let)
+(defn buscar-linea [nro-linea lineas-amb]
+  (first (filter (partial iguales? nro-linea) lineas-amb)))
+
+;; modifico la linea removida
+(defn seleccionar-sentencias [cant-sentencias-restantes, linea]
+  (take (inc cant-sentencias-restantes) linea))
+
+(defn buscar-lineas-restantes [amb]
+  (let
+   [nro-linea (obtener-nro-linea amb)
+    ]
+    (cond
+      (not (number? nro-linea)) nil
+      :else (first (cargar-linea (seleccionar-sentencias (obtener-cant-sentencias-restantes amb) (buscar-linea nro-linea (obtener-lineas-amb amb))) amb)))
+    )
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; continuar-linea: implementa la sentencia RETURN, retornando una
@@ -876,25 +927,6 @@
 ; user=> (extraer-data (list '(10 (PRINT X) (REM ESTE NO) (DATA 30)) '(20 (DATA HOLA)) (list 100 (list 'DATA 'MUNDO (symbol ",") 10 (symbol ",") 20))))
 ; ("HOLA" "MUNDO" 10 20)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(comment
-
-  (def _prg (list '(10 (PRINT X) (REM ESTE NO) (DATA 30)) '(20 (DATA HOLA)) (list 100 (list 'DATA 'MUNDO (symbol ",") 10 (symbol ",") 20))))
-
-  (def _linea '(10 (PRINT X) (REM ESTE NO) (DATA 30)))
-
-  (extraer-data-sentencia (list 'DATA 'MUNDO (symbol ",") 10 (symbol ",") 20))
-  (extraer-data-sentencia '(DATA 30))
-  (extraer-data-sentencia '(DATA HOLA))
-
-  (extraer-data-linea (rest _linea))
-  (extraer-data-linea (rest '(20 (DATA HOLA))))
-  (extraer-data-linea (rest (list 100 (list 'DATA 'MUNDO (symbol ",") 10 (symbol ",") 20))))
-
-  (extraer-data _prg)
-  (extraer-data '(()))
-
-  :rcf)
 
 (defn stringify [x]
   (if (number? x) x (str x)))
