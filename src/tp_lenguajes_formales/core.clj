@@ -498,6 +498,14 @@
 ; con un resultado (usado luego por evaluar-linea) y un ambiente
 ; actualizado
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(comment
+
+  (def sentencia (list 'PRINT "Hola"))
+  
+  (evaluar 'PRINT [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  (or (contains? (set sentencia) nil) (and (palabra-reservada? (first sentencia)) (= (second sentencia) '=)))
+  :rcf)
+
 (defn evaluar [sentencia amb]
   (if (or (contains? (set sentencia) nil) (and (palabra-reservada? (first sentencia)) (= (second sentencia) '=)))
     (do (dar-error 16 (amb 1)) [nil amb])  ; Syntax error  
@@ -635,7 +643,22 @@
 ; user=> (palabra-reservada? 'SPACE)
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn palabra-reservada? [x])
+(comment
+  
+  (palabra-reservada? 'REM) 
+  (palabra-reservada? 'EXIT)
+  (palabra-reservada? 'CLEAR)
+  (palabra-reservada? 'RUN)
+  (palabra-reservada? 'SPACE)
+  (palabra-reservada? 'RUn)
+  (palabra-reservada? 'PRINT)
+  (palabra-reservada? 'END)
+
+  :rcf)
+
+(defn palabra-reservada? [x]
+  (not (empty? (re-seq #"EXIT|ENV|DATA|REM|NEW|CLEAR|LIST|RUN|LOAD|SAVE|LET|AND|OR|NOT|ABS|SGN|INT|SQR|SIN|COS|TAN|ATN|EXP|LOG|LEN|LEFT\$|MID\$|RIGHT\$|STR\$|VAL|CHR\$|ASC|GOTO|ON|IF|THEN|FOR|TO|STEP|NEXT|GOSUB|RETURN|END|INPUT|READ|RESTORE|PRINT" (str x))))
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; operador?: predicado para determinar si un identificador es un
@@ -753,7 +776,22 @@
 ;
 ; ?ERROR DISK FULL IN 100nil
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn dar-error [cod prog-ptrs])
+
+(comment
+  
+  (dar-error 16 [:ejecucion-inmediata 4])
+  (dar-error "?ERROR DISK FULL" [:ejecucion-inmediata 4])
+  (dar-error 16 [100 3])
+  (dar-error "?ERROR DISK FULL" [100 3]) 
+
+  :rcf)
+
+(defn dar-error [cod prog-ptrs]
+  (let [nro-linea (if (number? (first prog-ptrs)) (str " IN " (first prog-ptrs)) nil)]
+    (cond
+      (string? cod) (print (str cod nro-linea))
+      :else (print (str (buscar-mensaje cod) nro-linea)))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; variable-float?: predicado para determinar si un identificador
@@ -876,12 +914,6 @@
   (obtener-nro-linea _amb)
   (obtener-cant-sentencias-restantes _amb)
 
-
-  (seleccionar-sentencias-2 2 (first _lineas))
-  (seleccionar-sentencias-2 1 (first _lineas))
-  (seleccionar-sentencias-2 0 (first _lineas))
-
-
   (buscar-lineas-restantes [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
   (buscar-lineas-restantes ['((PRINT X) (PRINT Y)) [:ejecucion-inmediata 2] [] [] [] 0 {}])
   (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [10 2] [] [] [] 0 {}])
@@ -910,23 +942,8 @@
 (defn obtener-lineas-amb [amb]
   (nth amb 0))
 
-;; busco la linea
-(defn buscar-linea [nro-linea lineas-amb]
-  (first (filter (partial iguales? nro-linea) lineas-amb)))
-
-;; modifico la linea removida
 (defn seleccionar-sentencias [cant-sentencias-restantes, linea]
-  (take (if (neg? cant-sentencias-restantes) 1 (inc cant-sentencias-restantes))  (cons (first linea) (expandir-nexts (rest linea)))))
-
-(defn seleccionar-sentencias-2 [cant-sentencias-restantes, linea]
   (cons (first linea) (reverse (take (if (neg? cant-sentencias-restantes) 0 cant-sentencias-restantes)  (reverse (expandir-nexts (rest linea)))))))
-
-(defn buscar-lineas-restantes-2 [amb]
-  (let
-   [nro-linea (obtener-nro-linea amb)]
-    (cond
-      (not (number? nro-linea)) nil
-      :else (first (cargar-linea (seleccionar-sentencias-2 (obtener-cant-sentencias-restantes amb) (buscar-linea nro-linea (obtener-lineas-amb amb))) amb)))))
 
 (defn remover-lineas-hasta [nro-linea lineas-amb]
   (cond
@@ -942,7 +959,7 @@
     (cond
       (not (number? puntero_linea)) nil
       (empty? lineas-restantes) nil
-      :else (cons (seleccionar-sentencias-2 (obtener-cant-sentencias-restantes amb) (first lineas-restantes)) (rest lineas-restantes)))))
+      :else (cons (seleccionar-sentencias (obtener-cant-sentencias-restantes amb) (first lineas-restantes)) (rest lineas-restantes)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; continuar-linea: implementa la sentencia RETURN, retornando una

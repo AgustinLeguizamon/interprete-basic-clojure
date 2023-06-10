@@ -47,3 +47,25 @@
     (is (= (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 -1] [] [] [] 0 {}]) (list (list 20))))
     (is (= (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [25 0] [] [] [] 0 {}]) nil)))
   )
+
+(comment
+  ;; no se puede testear pq print devuelve nil
+  (deftest dar-error-test
+    (testing "Prueba de la funcion: dar-error"
+      (is (= (dar-error 16 [:ejecucion-inmediata 4]) "?SYNTAX  ERROR"))
+      (is (= (dar-error "?ERROR DISK FULL" [:ejecucion-inmediata 4]) "?SYNTAX  ERROR"))
+      (is (= (dar-error 16 [100 3]) " ?SYNTAX  ERROR IN 100nil"))
+      (is (= (dar-error "?ERROR DISK FULL" [100 3]) "?ERROR DISK FULL IN 100nil"))))
+  )
+
+(deftest palabra-reservada?-test
+  (testing "Prueba de la funcion: palabra-reservada"
+    (is (= (palabra-reservada? 'REM) true)) 
+      (is (= (palabra-reservada? 'EXIT) true))
+      (is (= (palabra-reservada? 'CLEAR) true))
+      (is (= (palabra-reservada? 'RUN) true))
+      (is (= (palabra-reservada? 'SPACE) false))
+      (is (= (palabra-reservada? 'RUn) false))
+    )
+  )
+
