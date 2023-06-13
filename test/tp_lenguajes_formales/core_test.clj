@@ -132,3 +132,15 @@
     (is (= (aridad 'THEN) 0))
     )
 )
+
+(deftest precedencia-test
+  (testing "Prueba de la funcion: precedencia"
+    (is (= (precedencia 'OR) 1))
+    (is (= (precedencia 'AND) 2))
+    (is (= (precedencia '*) 6))
+    (is (= (precedencia '-u) 7))
+    (is (= (precedencia 'MID$) 8))
+    (is (= (precedencia (symbol "^")) 8))
+    
+    )
+  )

@@ -1164,6 +1164,14 @@
 ; user=> (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") '- 2 '+ 'K (symbol ",") 3 (symbol ")")))
 ; (MID3$ ( 1 , -u 2 + K , 3 ))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(comment
+  
+  ;; (- 2 * (- 3 + 5 - ( + 2 / 7))
+  (list '- 2 '* (symbol "(") '- 3 '+ 5 '- (symbol "(") '+ 2 '/ 7 (symbol ")") (symbol ")") )
+  (count (list '- 2 '* (symbol "(") '- 3 '+ 5 '- (symbol "(") '+ 2 '/ 7 (symbol ")") (symbol ")")))
+
+  :rcf)
+
 (defn desambiguar [expr])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1180,7 +1188,37 @@
 ; user=> (precedencia 'MID$)
 ; 8
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn precedencia [token])
+(comment
+  (precedencia 'OR)
+  (precedencia 'AND)
+  (precedencia '*)
+  (precedencia '-u)
+  (precedencia 'MID$) 
+  (precedencia (symbol "^"))
+
+  :rcf)
+
+(defn precedencia [token]
+  (cond
+    (= token (symbol "^")) 8
+    :else (case token
+            OR 1
+            AND 2
+            NOT 3
+            > 4
+            < 4
+            = 4
+            <= 4
+            >= 4
+            + 5
+            - 5
+            * 6
+            / 6
+            -u 7 
+            8)
+    )
+  
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; aridad: recibe un token y retorna el valor de su aridad, por
