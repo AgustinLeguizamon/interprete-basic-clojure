@@ -820,7 +820,31 @@
 ; user=> (variable-float? 'X$)
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn variable-float? [x])
+
+(comment
+  
+  (re-matches #".*[A-Z0-9]$" (str 'X))
+  (re-matches #".*[A-Z0-9]$" (str 'X1))
+  (not (nil? (re-matches #".*[A-Z0-9]$" (str '1))))
+  (re-matches #".*[A-Z0-9]$" (str 'X%))
+  (re-matches #".*[A-Z0-9]$" (str 'X$))
+
+  (variable-float? 'X)
+  (variable-float? 'X1)
+  (variable-float? 1)
+  (variable-float? 'X%)
+  (variable-float? 'X$)
+  
+  :rcf)
+
+(defn empieza-con-letra? [x]
+  (re-matches #"^[A-Z].*" (str x)))
+
+(defn variable-float? [x]
+  (cond
+    (palabra-reservada? x) false
+    (not (nil? (empieza-con-letra? x))) (not (nil? (re-matches #".*[A-Z0-9]$" (str x))))
+    :else false))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; variable-integer?: predicado para determinar si un identificador
@@ -833,7 +857,7 @@
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (comment
-  
+
   (palabra-reservada? 'X%)
   (palabra-reservada? 'X)
   (palabra-reservada? 'X$)
@@ -841,14 +865,14 @@
   (first "hola")
   (if (re-matches #"^[A-Z].*" (str 'X%)) "si" "no")
   (re-matches #"^[A-Z].*" (str (symbol "1%")))
-  
+
   (re-matches #".*%$" (str 'X%))
   (re-matches #".*%$" (str 'X$))
   (re-matches #".*%$" (str 'X))
 
-  
+
   (and (not (nil? (empieza-con-letra? 'X%))) (not (nil? (re-matches #".*%$" (str 'X%)))))
-  
+
   (not (nil? (empieza-con-letra? 1)))
   (not (nil? (re-matches #".*%$" (str 1))))
 
@@ -857,22 +881,19 @@
   (variable-integer? '$)
   (variable-integer? 'REM)
   (variable-integer? 1)
-  
+
   (nil? true)
   (nil? false)
-  
+
   :rcf)
 
-  (defn empieza-con-letra? [x]
-    (re-matches #"^[A-Z].*" (str x)))
+
 
 (defn variable-integer? [x]
   (cond
     (palabra-reservada? x) false
     (not (nil? (empieza-con-letra? x))) (not (nil? (re-matches #".*%$" (str x))))
-    :else false
-    )
-  )
+    :else false))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; variable-string?: predicado para determinar si un identificador
@@ -892,13 +913,12 @@
   (variable-string? 1)
 
   :rcf)
-  
-  (defn variable-string? [x]
-    (cond
-      (palabra-reservada? x) false
-      (not (nil? (empieza-con-letra? x))) (not (nil? (re-matches #".*\$$" (str x))))
-      :else false)
-  )
+
+(defn variable-string? [x]
+  (cond
+    (palabra-reservada? x) false
+    (not (nil? (empieza-con-letra? x))) (not (nil? (re-matches #".*\$$" (str x))))
+    :else false))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; contar-sentencias: recibe un numero de linea y un ambiente y
