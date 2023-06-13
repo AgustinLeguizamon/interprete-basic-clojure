@@ -884,7 +884,21 @@
 ; user=> (variable-string? 'X%)
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn variable-string? [x])
+(comment
+  (variable-string? 'X%)
+  (variable-string? 'X)
+  (variable-string? 'X$)
+  (variable-string? 'REM)
+  (variable-string? 1)
+
+  :rcf)
+  
+  (defn variable-string? [x]
+    (cond
+      (palabra-reservada? x) false
+      (not (nil? (empieza-con-letra? x))) (not (nil? (re-matches #".*\$$" (str x))))
+      :else false)
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; contar-sentencias: recibe un numero de linea y un ambiente y

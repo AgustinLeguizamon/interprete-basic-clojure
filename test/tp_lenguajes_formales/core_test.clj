@@ -91,3 +91,9 @@
   (is (= (variable-integer? 'X%) true))
   (is (= (variable-integer? 'X) false))
   (is (= (variable-integer? 'X$) false)))
+
+(deftest variable-string?-test
+  (testing "Prueba de la funcion: variable-string?")
+  (is (= (variable-string? 'X%) false))
+  (is (= (variable-string? 'X) false))
+  (is (= (variable-string? 'X$) true)))
