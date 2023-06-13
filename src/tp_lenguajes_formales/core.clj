@@ -683,10 +683,14 @@
   (operador? (symbol "^"))
   (operador? (symbol "%"))
 
+  (operador? '>=)
+  (operador? '>) 
+  (operador? 'AND)
+
   :rcf)
 
 (defn operador? [x]
-  (not (nil? (re-matches #"\+|\-|\*|\/|\^" (str x))))
+  (not (nil? (re-matches #"\+|\-|\*|\/|\^|\<|\=|\>|\<\=|\>\=|\<\>|AND|OR|NOT" (str x))))
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1183,7 +1187,9 @@
 ; user=> (aridad 'MID3$)
 ; 3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn aridad [token])
+(defn aridad [token]
+  
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; eliminar-cero-decimal: recibe un numero y lo retorna sin ceros
