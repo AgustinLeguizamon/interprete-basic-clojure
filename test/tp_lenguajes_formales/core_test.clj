@@ -74,7 +74,6 @@
 
 (deftest eliminar-cero-entero-test
   (testing "Prueba de la funcion: eliminar-cero-entero"
-
     (is (= (eliminar-cero-entero nil) nil))
     (is ( = (eliminar-cero-entero 'A) "A"))
     (is ( = (eliminar-cero-entero 0) " 0"))
@@ -86,3 +85,9 @@
     (is ( = (eliminar-cero-entero -0.5) "-.5"))
     )
   )
+
+(deftest variable-integer?-test
+  (testing "Prueba de la funcion: variable-integer?") 
+  (is (= (variable-integer? 'X%) true))
+  (is (= (variable-integer? 'X) false))
+  (is (= (variable-integer? 'X$) false)))

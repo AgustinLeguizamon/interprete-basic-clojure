@@ -832,7 +832,47 @@
 ; user=> (variable-integer? 'X$)
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn variable-integer? [x])
+(comment
+  
+  (palabra-reservada? 'X%)
+  (palabra-reservada? 'X)
+  (palabra-reservada? 'X$)
+
+  (first "hola")
+  (if (re-matches #"^[A-Z].*" (str 'X%)) "si" "no")
+  (re-matches #"^[A-Z].*" (str (symbol "1%")))
+  
+  (re-matches #".*%$" (str 'X%))
+  (re-matches #".*%$" (str 'X$))
+  (re-matches #".*%$" (str 'X))
+
+  
+  (and (not (nil? (empieza-con-letra? 'X%))) (not (nil? (re-matches #".*%$" (str 'X%)))))
+  
+  (not (nil? (empieza-con-letra? 1)))
+  (not (nil? (re-matches #".*%$" (str 1))))
+
+  (variable-integer? 'X%)
+  (variable-integer? 'X)
+  (variable-integer? '$)
+  (variable-integer? 'REM)
+  (variable-integer? 1)
+  
+  (nil? true)
+  (nil? false)
+  
+  :rcf)
+
+  (defn empieza-con-letra? [x]
+    (re-matches #"^[A-Z].*" (str x)))
+
+(defn variable-integer? [x]
+  (cond
+    (palabra-reservada? x) false
+    (not (nil? (empieza-con-letra? x))) (not (nil? (re-matches #".*%$" (str x))))
+    :else false
+    )
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; variable-string?: predicado para determinar si un identificador
