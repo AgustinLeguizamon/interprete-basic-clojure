@@ -117,3 +117,18 @@
   (is (= (operador? (symbol "^")) true))
   (is (= (operador? (symbol "++")) false))
   (is (= (operador? (symbol "%")) false)))
+
+(deftest aridad-test
+  (testing "Prueba de la funcion: aridad"
+    (is (= (aridad 'ATN) 1))
+    (is (= (aridad '+) 2))
+    (is (= (aridad '/) 2))
+    (is (= (aridad 'AND) 2))
+    (is (= (aridad '<) 2))
+    (is (= (aridad '<=) 2))
+    (is (= (aridad (symbol "STR$")) 1))
+    (is (= (aridad (symbol "MID$")) 2))
+    (is (= (aridad (symbol "MID3$")) 3))
+    (is (= (aridad 'THEN) 0))
+    )
+)

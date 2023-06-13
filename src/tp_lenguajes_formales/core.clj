@@ -1187,8 +1187,63 @@
 ; user=> (aridad 'MID3$)
 ; 3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(comment
+  (aridad 'INPUT)
+
+  (apply str (drop-last (str 'INPUT)))
+
+  (aridad 'ATN)
+  (aridad '+)
+  (aridad '/)
+  (aridad 'AND)
+  (aridad '<)
+  (aridad '<=)
+  (aridad (symbol "STR$"))
+  (aridad (symbol "MID$"))
+  (aridad (symbol "MID3$"))
+  (aridad 'THEN)
+
+  (apply str (drop-last (str 'ATN)))
+
+  (re-matches #".*[^0-9]\$$" (str (symbol "MID$")))
+  (re-matches #"MID[0-9]\$$" (str (symbol "MID$")))
+  (re-matches #"MID[0-9]\$$" (str (symbol "MID3$"))) 
+  (re-matches #".*[0-9]\$$" (str (symbol "MID3$")))
+
+
+  :rcf)
+
+;; PREGUNTA: como se la aridad? que es MID3$?
+
 (defn aridad [token]
-  
+  (cond
+    (re-matches #"MID[0-9]\$$" (str token)) 3
+    (re-matches #".*[^0-9]\$$" (str token))
+    (case (apply str (drop-last (str token)))
+      "MID" 2
+      "CHR" 1
+      "STR" 1
+      token)
+    :else (case token
+            ATN 1
+            INT 1
+            SIN 1
+            EXP 1
+            LOG 1
+            LEN 1
+            ASC 1
+            + 2
+            - 2
+            * 2
+            / 2
+            = 2
+            < 2
+            > 2
+            <= 2
+            >= 2
+            AND 2
+            OR 2
+            0))
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
