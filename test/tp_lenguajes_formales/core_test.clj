@@ -60,12 +60,29 @@
 
 (deftest palabra-reservada?-test
   (testing "Prueba de la funcion: palabra-reservada"
-    (is (= (palabra-reservada? 'REM) true)) 
-      (is (= (palabra-reservada? 'EXIT) true))
-      (is (= (palabra-reservada? 'CLEAR) true))
-      (is (= (palabra-reservada? 'RUN) true))
-      (is (= (palabra-reservada? 'SPACE) false))
-      (is (= (palabra-reservada? 'RUn) false))
-    )
+    (is (= (palabra-reservada? 'REM) true))
+    (is (= (palabra-reservada? 'EXIT) true))
+    (is (= (palabra-reservada? 'CLEAR) true))
+    (is (= (palabra-reservada? 'RUN) true))
+    (is (= (palabra-reservada? 'SPACE) false))
+    (is (= (palabra-reservada? 'RUn) false)))
   )
 
+(deftest anular-invalido-test
+  (testing "Prueba de la funcion: anular-invalidos"
+    (is (= (anular-invalidos '(IF X & * Y < 12 THEN LET ! X = 0)) '(IF X nil * Y < 12 THEN LET nil X = 0)))))
+
+(deftest eliminar-cero-entero-test
+  (testing "Prueba de la funcion: eliminar-cero-entero"
+
+    (is (= (eliminar-cero-entero nil) nil))
+    (is ( = (eliminar-cero-entero 'A) "A"))
+    (is ( = (eliminar-cero-entero 0) " 0"))
+    (is ( = (eliminar-cero-entero 1.5) " 1.5"))
+    (is ( = (eliminar-cero-entero 1) " 1"))
+    (is ( = (eliminar-cero-entero -1) "-1"))
+    (is ( = (eliminar-cero-entero -1.5) "-1.5"))
+    (is ( = (eliminar-cero-entero 0.5) " .5"))
+    (is ( = (eliminar-cero-entero -0.5) "-.5"))
+    )
+  )

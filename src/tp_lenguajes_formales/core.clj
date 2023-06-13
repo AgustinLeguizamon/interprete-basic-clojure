@@ -501,8 +501,8 @@
 (comment
 
   (def sentencia (list 'PRINT "Hola"))
-  
-  (evaluar 'PRINT [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+
+  (evaluar (list 'PRINT) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
   (or (contains? (set sentencia) nil) (and (palabra-reservada? (first sentencia)) (= (second sentencia) '=)))
   :rcf)
 
@@ -644,8 +644,8 @@
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (comment
-  
-  (palabra-reservada? 'REM) 
+
+  (palabra-reservada? 'REM)
   (palabra-reservada? 'EXIT)
   (palabra-reservada? 'CLEAR)
   (palabra-reservada? 'RUN)
@@ -657,8 +657,7 @@
   :rcf)
 
 (defn palabra-reservada? [x]
-  (not (empty? (re-seq #"EXIT|ENV|DATA|REM|NEW|CLEAR|LIST|RUN|LOAD|SAVE|LET|AND|OR|NOT|ABS|SGN|INT|SQR|SIN|COS|TAN|ATN|EXP|LOG|LEN|LEFT\$|MID\$|RIGHT\$|STR\$|VAL|CHR\$|ASC|GOTO|ON|IF|THEN|FOR|TO|STEP|NEXT|GOSUB|RETURN|END|INPUT|READ|RESTORE|PRINT" (str x))))
-  )
+  (not (empty? (re-seq #"EXIT|ENV|DATA|REM|NEW|CLEAR|LIST|RUN|LOAD|SAVE|LET|AND|OR|NOT|ABS|SGN|INT|SQR|SIN|COS|TAN|ATN|EXP|LOG|LEN|LEFT\$|MID\$|RIGHT\$|STR\$|VAL|CHR\$|ASC|GOTO|ON|IF|THEN|FOR|TO|STEP|NEXT|GOSUB|RETURN|END|INPUT|READ|RESTORE|PRINT" (str x)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; operador?: predicado para determinar si un identificador es un
@@ -678,7 +677,25 @@
 ; user=> (anular-invalidos '(IF X & * Y < 12 THEN LET ! X = 0))
 ; (IF X nil * Y < 12 THEN LET nil X = 0)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn anular-invalidos [sentencia])
+(comment
+
+  (re-seq #"\;|\=|\+|\-|\*|\/|\^" "a")
+
+  (anular-invalido '+)
+  (anular-invalido 'Y)
+  (anular-invalido '&)
+
+  (anular-invalidos '(IF X & * Y < 12 THEN LET ! X = 0))
+  :rcf)
+
+(defn anular-invalido [simbolo]
+  (cond
+    (palabra-reservada? simbolo) simbolo
+    (empty? (re-seq #"\;|\=|\+|\-|\*|\/|\^|\<|\>|[A-Z]|[0-9]" (str simbolo))) nil
+    :else simbolo))
+
+(defn anular-invalidos [sentencia]
+  (map anular-invalido sentencia))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; cargar-linea: recibe una linea de codigo y un ambiente y retorna
@@ -778,11 +795,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (comment
-  
+
   (dar-error 16 [:ejecucion-inmediata 4])
   (dar-error "?ERROR DISK FULL" [:ejecucion-inmediata 4])
   (dar-error 16 [100 3])
-  (dar-error "?ERROR DISK FULL" [100 3]) 
+  (dar-error "?ERROR DISK FULL" [100 3])
 
   :rcf)
 
@@ -1113,6 +1130,48 @@
 ; user=> (eliminar-cero-entero -0.5)
 ; "-.5"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn eliminar-cero-entero [n])
+(comment
+
+  (str 'A)
+  (str 0)
+
+  (symbol? 'A)
+  (symbol? 0)
+  (number? 0)
+  (number? -1)
+  (number? -1.5)
+  (str " " -1.5)
+
+
+
+  (eliminar-cero-entero-aux -0.5)
+  (eliminar-cero-entero-aux 0.5)
+  (eliminar-cero-entero-aux 0)
+
+
+  (eliminar-cero-entero 'A)
+  (eliminar-cero-entero 0)
+  (eliminar-cero-entero 1.5)
+  (eliminar-cero-entero 1)
+  (eliminar-cero-entero -1)
+  (eliminar-cero-entero -1.5)
+  (eliminar-cero-entero 0.5)
+  (eliminar-cero-entero -0.5)
+
+  :rcf)
+
+(defn eliminar-cero-entero-aux [n]
+  (cond
+    (not (empty? (re-seq #"^-0." (str n)))) (str/replace-first (str n) #"^-0." "-.")
+    (not (empty? (re-seq #"^0." (str n)))) (str/replace-first (str n) #"^0." " .")
+    (pos? n) (str " " n)
+    (zero? n) (str " " n)
+    :else (str n)))
+
+(defn eliminar-cero-entero [n]
+  (cond
+    (symbol? n) (str n)
+    (number? n) (eliminar-cero-entero-aux n)
+    :else nil))
 
 true
