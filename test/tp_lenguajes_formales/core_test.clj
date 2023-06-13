@@ -103,3 +103,16 @@
   (is (= (variable-float? 'X%) false))
   (is (= (variable-float? 'X) true))
   (is (= (variable-float? 'X$) false)))
+
+(deftest operador?-test
+  (testing "Prueba de la funcion: operador?")
+  (is (= (operador? '+) true))
+  (is (= (operador? '-) true))
+  (is (= (operador? '*) true))
+  (is (= (operador? '/) true))
+  (is (= (operador? (symbol "+")) true))
+  (is (= (operador? (symbol "^")) true))
+  (is (= (operador? (symbol "++")) false)) 
+  (is (= (operador? (symbol "%")) false))
+  
+  )

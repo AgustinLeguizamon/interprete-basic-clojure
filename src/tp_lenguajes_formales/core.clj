@@ -669,7 +669,25 @@
 ; user=> (operador? (symbol "%"))
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn operador? [x])
+
+;; PREGUNTA: como hago regex de phi?
+
+(comment
+
+  (operador? '+)
+  (operador? '-)
+  (operador? '*)
+  (operador? '/) 
+  (operador? (symbol "+"))
+  (operador? (symbol "++"))
+  (operador? (symbol "^"))
+  (operador? (symbol "%"))
+
+  :rcf)
+
+(defn operador? [x]
+  (not (nil? (re-matches #"\+|\-|\*|\/|\^" (str x))))
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; anular-invalidos: recibe una lista de simbolos y la retorna con
