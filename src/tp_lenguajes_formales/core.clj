@@ -445,6 +445,13 @@
 ; concatenaciones (los puntos y comas). Salvo cuando la lista
 ; termina en punto y coma, imprime un salto de linea al terminar
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(comment
+  
+  (imprimir (list 'PRINT "HOLA") amb)
+  (imprimir (list '(X + 5)) amb)
+  
+  :rcf)
+
 (defn imprimir
   ([v]
    (let [expresiones (v 0), amb (v 1)]
@@ -500,10 +507,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (comment
 
-  (def sentencia (list 'PRINT "Hola"))
+  (def sentencia (list 'PRINT 'HOLA))
 
   (evaluar (list 'PRINT) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  (evaluar sentencia [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
   (or (contains? (set sentencia) nil) (and (palabra-reservada? (first sentencia)) (= (second sentencia) '=)))
+  (first sentencia)
   :rcf)
 
 (defn evaluar [sentencia amb]
@@ -1201,7 +1210,8 @@
   (aridad (symbol "STR$"))
   (aridad (symbol "MID$"))
   (aridad (symbol "MID3$"))
-  (aridad 'THEN)
+  (aridad 'THEN) 
+  (aridad 'LET/=)
 
   (apply str (drop-last (str 'ATN)))
 
@@ -1215,36 +1225,31 @@
 
 ;; PREGUNTA: como se la aridad? que es MID3$?
 
-(defn aridad [token]
-  (cond
-    (re-matches #"MID[0-9]\$$" (str token)) 3
-    (re-matches #".*[^0-9]\$$" (str token))
-    (case (apply str (drop-last (str token)))
-      "MID" 2
-      "CHR" 1
-      "STR" 1
-      token)
-    :else (case token
-            ATN 1
-            INT 1
-            SIN 1
-            EXP 1
-            LOG 1
-            LEN 1
-            ASC 1
-            + 2
-            - 2
-            * 2
-            / 2
-            = 2
-            < 2
-            > 2
-            <= 2
-            >= 2
-            AND 2
-            OR 2
-            0))
-  )
+(defn aridad [token] 
+  (case token
+    MID3$ 3
+    MID$ 2
+    CHR$ 1
+    STR$ 1
+    ATN 1
+    INT 1
+    SIN 1
+    EXP 1
+    LOG 1
+    LEN 1
+    ASC 1
+    + 2
+    - 2
+    * 2
+    / 2
+    = 2
+    < 2
+    > 2
+    <= 2
+    >= 2
+    AND 2
+    OR 2
+    0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; eliminar-cero-decimal: recibe un numero y lo retorna sin ceros
