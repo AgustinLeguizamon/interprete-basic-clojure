@@ -130,6 +130,7 @@
     (is (= (aridad (symbol "MID$")) 2))
     (is (= (aridad (symbol "MID3$")) 3))
     (is (= (aridad 'THEN) 0))
+    (is (= (aridad '-u) 1))
     )
 )
 
@@ -144,3 +145,14 @@
     
     )
   )
+
+(deftest eliminar-cero-decimal-test
+  (testing "Prueba de la funcion: eliminar-cero-decimal"
+    (is (= (eliminar-cero-decimal 1.5) 1.5))
+    (is (= (eliminar-cero-decimal 1.50) 1.50))
+    (is (= (eliminar-cero-decimal 1.504) 1.504))
+    (is (= (eliminar-cero-decimal 1.5040) 1.504))
+    (is (= (eliminar-cero-decimal 1.0) 1))
+    (is (= (eliminar-cero-decimal 10.0000) 10))
+    (is (= (eliminar-cero-decimal 'A) 'A))
+    ))

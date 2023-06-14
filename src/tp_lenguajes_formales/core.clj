@@ -445,9 +445,13 @@
 ; concatenaciones (los puntos y comas). Salvo cuando la lista
 ; termina en punto y coma, imprime un salto de linea al terminar
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; PREGUNTA RESPONDIDA: ejemplo de una lista de expresiones
+;; expresión: todo lo que viene a la derecha de PRINT
+
 (comment
   
-  (imprimir (list 'PRINT "HOLA") amb)
+  (imprimir '(x) [() [:ejecucion-inmediata 0] [] [] [] 0 {'x 5}])
   (imprimir (list '(X + 5)) amb)
   
   :rcf)
@@ -680,6 +684,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; PREGUNTA: como hago regex de phi?
+;; RESPUESTA: No tenemos phi y tampoco la potencia es decir la flechita para arriba
 
 (comment
 
@@ -708,6 +713,12 @@
 ; user=> (anular-invalidos '(IF X & * Y < 12 THEN LET ! X = 0))
 ; (IF X nil * Y < 12 THEN LET nil X = 0)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; PREGUNTA RESPONDIDA: lista de simbolos equivale a expresión??
+;; numero, variable, string, palabra-reservada son simbolos validos lo que no entra, es invalido
+
+;; FIXME: ver de integrar las funcioens variable-string? float? integer?
+
 (comment
 
   (re-seq #"\;|\=|\+|\-|\*|\/|\^" "a")
@@ -1188,6 +1199,10 @@
 ; user=> (precedencia 'MID$)
 ; 8
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; PREGUNTA: pq MID tiene 8, es un por defecto?? todo lo que no sea un operador tiene 8??
+;; RESPUESTA: Si
+
 (comment
   (precedencia 'OR)
   (precedencia 'AND)
@@ -1261,7 +1276,11 @@
 
   :rcf)
 
-;; PREGUNTA: como se la aridad? que es MID3$?
+;; PREGUNTA RESPONDIDA: como se la aridad? que es MID3$?
+;; ¿que implica un token?
+
+;; todo lo que no sea un operador o funcion tiene aridad 0, es decir las sentencias
+;; aridad -> token es lo que te da la funcion de strings-a-tokens
 
 (defn aridad [token] 
   (case token
@@ -1277,6 +1296,7 @@
     LEN 1
     ASC 1
     + 2
+    -u 1
     - 2
     * 2
     / 2
@@ -1301,7 +1321,42 @@
 ; user=> (eliminar-cero-decimal 'A)
 ; A
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn eliminar-cero-decimal [n])
+
+(comment
+  
+  (eliminar-cero-decimal-aux 1.50)
+  (eliminar-cero-decimal-aux 1.550)
+  
+  (println 1.50)
+
+  ;; cuando no tiene decimales significativos lo tengo que castear a entero
+
+
+  (and (float? 1.0) (str/ends-with? (str 1.0) ".0"))
+  
+  (str/ends-with? (str 1.0000) ".0")
+
+  (eliminar-cero-decimal 1.5)
+  (eliminar-cero-decimal 1.50)
+  (eliminar-cero-decimal 1.504)
+  (eliminar-cero-decimal 1.5040)
+  (eliminar-cero-decimal 1.0)
+  (eliminar-cero-decimal 10.0000)
+  (eliminar-cero-decimal 'A)
+  
+  :rcf)
+
+(defn eliminar-cero-decimal-aux [n]
+  (cond
+    (and (float? n) (str/ends-with? (str n) ".0")) (int n) 
+    :else n))
+
+(defn eliminar-cero-decimal [n]
+    (cond
+      (symbol? n) n
+      (number? n) (eliminar-cero-decimal-aux n)
+      :else nil)
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; eliminar-cero-entero: recibe un simbolo y lo retorna convertido
