@@ -923,6 +923,7 @@
   (variable-integer? '$)
   (variable-integer? 'REM)
   (variable-integer? 1)
+  (variable-integer? '<)
 
   (nil? true)
   (nil? false)
@@ -1160,7 +1161,37 @@
 ; user=> (preprocesar-expresion '(X + . / Y% * Z) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 5 Y% 2}])
 ; (5 + 0 / 2 * 0)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn preprocesar-expresion [expr amb])
+
+(comment
+  
+  (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}])
+  (preprocesar-expresion '(X + . / Y% * Z) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 5 Y% 2}])
+
+  :rcf)
+
+  (defn getHashMapAmbiente [amb]
+    (last amb))
+
+(defn obtener-variable-amb [valor-variable simbolo]
+  (cond
+    (and (nil? valor-variable) (or (variable-float? simbolo) (variable-integer? simbolo))) 0
+    (not (nil? valor-variable)) valor-variable
+    :else ""))
+
+(defn preprocesar-expresion-aux [hm-amb simbolo]
+  (let
+   [es-entero (variable-integer? simbolo),
+    es-float (variable-float? simbolo),
+    es-string (variable-string? simbolo)
+    valor-variable (hm-amb simbolo)]
+    (cond
+      (= simbolo '.) 0
+      (or es-entero es-float es-string) (obtener-variable-amb valor-variable simbolo)
+      :else simbolo)))
+
+(defn preprocesar-expresion [expr amb]
+  (map (partial preprocesar-expresion-aux (getHashMapAmbiente amb)) expr)
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; desambiguar: recibe un expresion y la retorna sin los + unarios,

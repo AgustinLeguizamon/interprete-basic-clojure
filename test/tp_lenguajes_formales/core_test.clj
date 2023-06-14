@@ -156,3 +156,10 @@
     (is (= (eliminar-cero-decimal 10.0000) 10))
     (is (= (eliminar-cero-decimal 'A) 'A))
     ))
+
+(deftest preprocesar-expresion-test
+  (testing "Prueba de la funcion: preprocesar-expresion"
+    (is (= (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]) '("HOLA" + " MUNDO" + "")))
+    (is (= (preprocesar-expresion '(X + . / Y% * Z) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 5 Y% 2}]) '(5 + 0 / 2 * 0)))
+    
+    ))
