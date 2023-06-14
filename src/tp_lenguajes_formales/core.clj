@@ -1207,14 +1207,27 @@
 ; (MID3$ ( 1 , -u 2 + K , 3 ))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (comment
-  
-  ;; (- 2 * (- 3 + 5 - ( + 2 / 7))
-  (list '- 2 '* (symbol "(") '- 3 '+ 5 '- (symbol "(") '+ 2 '/ 7 (symbol ")") (symbol ")") )
+
+
+  (list '- 2 '* (symbol "(") '- 3 '+ 5 '- (symbol "(") '+ 2 '/ 7 (symbol ")") (symbol ")"))
+  ;; ( - 2 * (- 3 + 5 - ( + 2 / 7)) )
+  ;; (-u 2 * (-u 3 + 5 - (2 / 7)))
+
   (count (list '- 2 '* (symbol "(") '- 3 '+ 5 '- (symbol "(") '+ 2 '/ 7 (symbol ")") (symbol ")")))
+  (desambiguar-mas-menos (list '- 2 '* (symbol "(") '- 3 '+ 5 '- (symbol "(") '+ 2 '/ 7 (symbol ")") (symbol ")")))
+
+  (desambiguar (list '- 2 '* (symbol "(") '- 3 '+ 5 '- (symbol "(") '+ 2 '/ 7 (symbol ")") (symbol ")")))
+  (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") 2 (symbol ")")))
+  (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") 2 (symbol ",") 3 (symbol ")")))
+  (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") '- 2 '+ 'K (symbol ",") 3 (symbol ")")))
+
+  (= 'x (symbol "x"))
 
   :rcf)
 
-(defn desambiguar [expr])
+(defn desambiguar [expr]
+  (desambiguar-mid (desambiguar-mas-menos expr))
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; precedencia: recibe un token y retorna el valor de su

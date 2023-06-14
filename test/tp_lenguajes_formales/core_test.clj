@@ -161,5 +161,16 @@
   (testing "Prueba de la funcion: preprocesar-expresion"
     (is (= (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]) '("HOLA" + " MUNDO" + "")))
     (is (= (preprocesar-expresion '(X + . / Y% * Z) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 5 Y% 2}]) '(5 + 0 / 2 * 0)))
+    ))
+
+(deftest desambiguar-test
+  (testing "Prueba de la funcion: desambiguar"
+    (is (= (desambiguar (list '- 2 '*)) '(-u 2 *)))
+    (is (= (desambiguar (list (symbol "x") 3 '+ 5 '- (symbol "x"))) '(x 3 + 5 - x)))
+    (is (= (desambiguar (list (symbol "x") 3 '+ 5 '- (symbol "x"))) (list (symbol "x") 3 '+ 5 '- (symbol "x"))))
+    (is (= (desambiguar (list '- 2 '* (symbol "(") '- 3 '+ 5 '- (symbol "(") '+ 2 '/ 7 (symbol ")") (symbol ")"))) (list '-u 2 '* (symbol "(") '-u 3 '+ 5 '- (symbol "(") 2 '/ 7 (symbol ")") (symbol ")"))))
+    (is (= (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") 2 (symbol ")"))) (list 'MID$ (symbol "(") 1 (symbol ",") 2 (symbol ")"))))
+    (is (= (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") 2 (symbol ",") 3 (symbol ")"))) (list 'MID3$ (symbol "(") 1 (symbol ",") 2 (symbol ",") 3 (symbol ")"))))
+    (is (= (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") '- 2 '+ 'K (symbol ",") 3 (symbol ")"))) (list 'MID3$ (symbol "(") 1 (symbol ",") '-u 2 '+ 'K (symbol ",") 3 (symbol ")"))))
     
     ))
