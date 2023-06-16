@@ -47,6 +47,8 @@
 (declare eliminar-cero-decimal)           ; IMPLEMENTAR
 (declare eliminar-cero-entero)            ; IMPLEMENTAR
 
+(declare spy)
+
 (defn -main
   "Ejemplo de Proyecto en Clojure"
   [& args]
@@ -339,6 +341,22 @@
 ; user=> (calcular-expresion '(X + 5) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}])
 ; 7
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(comment
+  (calcular-expresion '(X + 5) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}])
+  (calcular-expresion '("HOLA" + "MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}])
+
+  (calcular-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}])
+  (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]) 
+  (desambiguar (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))
+  
+  (shunting-yard (desambiguar (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) 
+  
+  ;; falla en calcular-rpn al parecer
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) (['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}] 1))
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(X$ + " MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) (['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}] 1))
+
+  :rcf)
+
 (defn calcular-expresion [expr amb]
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion expr amb))) (amb 1)))
 
@@ -392,6 +410,10 @@
 ; user=> (shunting-yard '(1 + 2))
 ; (1 2 +)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(comment
+  (shunting-yard '("HOLA" + "MUNDO"))
+  :rcf)
+
 (defn shunting-yard [tokens]
   (remove #(= % (symbol ","))
           (flatten
@@ -412,6 +434,14 @@
 ; y retorna el valor de la expresion o un mensaje de error en la
 ; linea indicada
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(comment
+
+  (calcular-rpn '("HOLA" " MUNDO" +) (['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}] 1))
+  (calcular-rpn '(3 4 +) [(['() [10 1] [] [] [] 0 '{}] 1)])
+  (calcular-rpn '(3 4 -) (['() [10 1] [] [] [] 0 '{}] 1))
+
+  :rcf)
+
 (defn calcular-rpn [tokens nro-linea]
   (try
     (let [resu-redu
@@ -450,10 +480,10 @@
 ;; expresión: todo lo que viene a la derecha de PRINT
 
 (comment
-  
+
   (imprimir '(x) [() [:ejecucion-inmediata 0] [] [] [] 0 {'x 5}])
-  (imprimir (list '(X + 5)) amb)
-  
+  (imprimir '("HOLA" + X + "CHAU") [() [:ejecucion-inmediata 0] [] [] [] 0 {'X 01.50}])
+
   :rcf)
 
 (defn imprimir
@@ -609,6 +639,10 @@
 ; resultante (si ocurre un error, muestra un mensaje y retorna
 ; nil)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(comment
+  (aplicar '+ "HOLA" " MUNDO" 10)
+  :rcf)
+
 (defn aplicar
   ([operador operando nro-linea]
    (if (nil? operando)
@@ -691,21 +725,20 @@
   (operador? '+)
   (operador? '-)
   (operador? '*)
-  (operador? '/) 
+  (operador? '/)
   (operador? (symbol "+"))
   (operador? (symbol "++"))
   (operador? (symbol "^"))
   (operador? (symbol "%"))
 
   (operador? '>=)
-  (operador? '>) 
+  (operador? '>)
   (operador? 'AND)
 
   :rcf)
 
 (defn operador? [x]
-  (not (nil? (re-matches #"\+|\-|\*|\/|\^|\<|\=|\>|\<\=|\>\=|\<\>|AND|OR|NOT" (str x))))
-  )
+  (not (nil? (re-matches #"\+|\-|\*|\/|\^|\<|\=|\>|\<\=|\>\=|\<\>|AND|OR|NOT" (str x)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; anular-invalidos: recibe una lista de simbolos y la retorna con
@@ -864,7 +897,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (comment
-  
+
   (re-matches #".*[A-Z0-9]$" (str 'X))
   (re-matches #".*[A-Z0-9]$" (str 'X1))
   (not (nil? (re-matches #".*[A-Z0-9]$" (str '1))))
@@ -876,7 +909,7 @@
   (variable-float? 1)
   (variable-float? 'X%)
   (variable-float? 'X$)
-  
+
   :rcf)
 
 (defn empieza-con-letra? [x]
@@ -1150,7 +1183,33 @@
 ; user=> (ejecutar-asignacion '(X$ = X$ + " MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}])
 ; [((10 (PRINT X))) [10 1] [] [] [] 0 {X$ "HOLA MUNDO"}]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn ejecutar-asignacion [sentencia amb])
+
+(comment
+
+  (first '(X = X + 1))
+  (drop 2 '(X = X + 1))
+  (drop 2 '(X$ = X$ + " MUNDO"))
+
+  (ejecutar-asignacion '(X = 5) ['((10 (PRINT X))) [10 1] [] [] [] 0 {}])
+  (ejecutar-asignacion '(X = 5) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}])
+  (ejecutar-asignacion '(X = X + 1) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}])
+  (ejecutar-asignacion '(X$ = X$ + " MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}])
+
+  :rcf)
+
+(defn getHashMapAmbiente [amb]
+  (last amb))
+
+(def indiceAmb {:lineas 0, :puntero 1, :hash-map 6})
+
+(indiceAmb :hash-map)
+
+(defn ejecutar-asignacion [sentencia amb]
+  (let [variable (first sentencia)
+        expresion (drop 2 sentencia)
+        calculo-expresion (calcular-expresion expresion amb)]
+    (assoc amb (indiceAmb :hash-map) (assoc (getHashMapAmbiente amb) variable calculo-expresion))
+    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; preprocesar-expresion: recibe una expresion y la retorna con
@@ -1163,14 +1222,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (comment
-  
+
   (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}])
   (preprocesar-expresion '(X + . / Y% * Z) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 5 Y% 2}])
 
   :rcf)
 
-  (defn getHashMapAmbiente [amb]
-    (last amb))
+
 
 (defn obtener-variable-amb [valor-variable simbolo]
   (cond
@@ -1190,8 +1248,7 @@
       :else simbolo)))
 
 (defn preprocesar-expresion [expr amb]
-  (map (partial preprocesar-expresion-aux (getHashMapAmbiente amb)) expr)
-  )
+  (map (partial preprocesar-expresion-aux (getHashMapAmbiente amb)) expr))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; desambiguar: recibe un expresion y la retorna sin los + unarios,
@@ -1220,14 +1277,14 @@
   (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") 2 (symbol ")")))
   (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") 2 (symbol ",") 3 (symbol ")")))
   (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") '- 2 '+ 'K (symbol ",") 3 (symbol ")")))
+  (desambiguar (list "HOLA" '+ "MUNDO"))
 
   (= 'x (symbol "x"))
 
   :rcf)
 
 (defn desambiguar [expr]
-  (desambiguar-mid (desambiguar-mas-menos expr))
-  )
+  (desambiguar-mid (desambiguar-mas-menos expr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; precedencia: recibe un token y retorna el valor de su
@@ -1252,7 +1309,7 @@
   (precedencia 'AND)
   (precedencia '*)
   (precedencia '-u)
-  (precedencia 'MID$) 
+  (precedencia 'MID$)
   (precedencia (symbol "^"))
 
   :rcf)
@@ -1273,11 +1330,8 @@
             - 5
             * 6
             / 6
-            -u 7 
-            8)
-    )
-  
-  )
+            -u 7
+            8)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; aridad: recibe un token y retorna el valor de su aridad, por
@@ -1307,14 +1361,14 @@
   (aridad (symbol "STR$"))
   (aridad (symbol "MID$"))
   (aridad (symbol "MID3$"))
-  (aridad 'THEN) 
+  (aridad 'THEN)
   (aridad 'LET/=)
 
   (apply str (drop-last (str 'ATN)))
 
   (re-matches #".*[^0-9]\$$" (str (symbol "MID$")))
   (re-matches #"MID[0-9]\$$" (str (symbol "MID$")))
-  (re-matches #"MID[0-9]\$$" (str (symbol "MID3$"))) 
+  (re-matches #"MID[0-9]\$$" (str (symbol "MID3$")))
   (re-matches #".*[0-9]\$$" (str (symbol "MID3$")))
 
 
@@ -1326,7 +1380,7 @@
 ;; todo lo que no sea un operador o funcion tiene aridad 0, es decir las sentencias
 ;; aridad -> token es lo que te da la funcion de strings-a-tokens
 
-(defn aridad [token] 
+(defn aridad [token]
   (case token
     MID3$ 3
     MID$ 2
@@ -1367,17 +1421,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (comment
-  
+
   (eliminar-cero-decimal-aux 1.50)
   (eliminar-cero-decimal-aux 1.550)
-  
+
   (println 1.50)
 
   ;; cuando no tiene decimales significativos lo tengo que castear a entero
 
 
   (and (float? 1.0) (str/ends-with? (str 1.0) ".0"))
-  
+
   (str/ends-with? (str 1.0000) ".0")
 
   (eliminar-cero-decimal 1.5)
@@ -1387,20 +1441,21 @@
   (eliminar-cero-decimal 1.0)
   (eliminar-cero-decimal 10.0000)
   (eliminar-cero-decimal 'A)
-  
+  (eliminar-cero-decimal "HOLA")
+
   :rcf)
 
 (defn eliminar-cero-decimal-aux [n]
   (cond
-    (and (float? n) (str/ends-with? (str n) ".0")) (int n) 
+    (and (float? n) (str/ends-with? (str n) ".0")) (int n)
     :else n))
 
 (defn eliminar-cero-decimal [n]
-    (cond
-      (symbol? n) n
-      (number? n) (eliminar-cero-decimal-aux n)
-      :else nil)
-  )
+  (cond
+    (string? n) n
+    (symbol? n) n
+    (number? n) (eliminar-cero-decimal-aux n)
+    :else nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; eliminar-cero-entero: recibe un simbolo y lo retorna convertido

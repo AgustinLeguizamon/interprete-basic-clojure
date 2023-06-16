@@ -174,3 +174,10 @@
     (is (= (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") '- 2 '+ 'K (symbol ",") 3 (symbol ")"))) (list 'MID3$ (symbol "(") 1 (symbol ",") '-u 2 '+ 'K (symbol ",") 3 (symbol ")"))))
     
     ))
+
+(deftest ejecutar-asignacion-test
+  (testing "Prueba de la funcion: ejecutar-asignacion"
+    (is (= (ejecutar-asignacion '(X = 5) ['((10 (PRINT X))) [10 1] [] [] [] 0 {}]) '[((10 (PRINT X))) [10 1] [] [] [] 0 {X 5}]))
+    (is (= (ejecutar-asignacion '(X = 5) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}]) '[((10 (PRINT X))) [10 1] [] [] [] 0 {X 5}]))
+    (is (= (ejecutar-asignacion '(X = X + 1) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}]) '[((10 (PRINT X))) [10 1] [] [] [] 0 {X 3}]))
+    (is (= (ejecutar-asignacion '(X$ = X$ + " MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]) '[((10 (PRINT X))) [10 1] [] [] [] 0 {X$ "HOLA MUNDO"}]))))
