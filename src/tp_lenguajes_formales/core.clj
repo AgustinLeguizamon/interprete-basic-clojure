@@ -830,12 +830,13 @@
 
   (anular-invalidos '(IF X & * Y < 12 THEN LET ! X = 0))
   (anular-invalidos '(X$ = ""))
+  (anular-invalidos '(X$ = "HOLA"))
   :rcf)
 
 (defn anular-invalido [simbolo]
-  (cond
+  (cond 
     (palabra-reservada? simbolo) simbolo
-    (empty? (re-seq #"\;|\=|\+|\-|\*|\/|\^|\<|\>|[A-Z]|[0-9]" (str simbolo))) nil
+    (empty? (re-seq #"\;|\=|\+|\-|\*|\/|\^|\<|\>|[A-Z]|[0-9]|^$" (str simbolo))) nil
     :else simbolo))
 
 (defn anular-invalidos [sentencia]

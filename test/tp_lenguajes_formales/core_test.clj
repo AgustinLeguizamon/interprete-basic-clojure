@@ -70,7 +70,10 @@
 
 (deftest anular-invalidos-test
   (testing "Prueba de la funcion: anular-invalidos"
-    (is (= (anular-invalidos '(IF X & * Y < 12 THEN LET ! X = 0)) '(IF X nil * Y < 12 THEN LET nil X = 0)))))
+    (is (= (anular-invalidos '(IF X & * Y < 12 THEN LET ! X = 0)) '(IF X nil * Y < 12 THEN LET nil X = 0)))
+    (is (= (anular-invalidos '(X$ = "")) '(X$ = "")))
+    (is (= (anular-invalidos '(X$ = "HOLA")) '(X$ = "HOLA")))
+    ))
 
 (deftest eliminar-cero-entero-test
   (testing "Prueba de la funcion: eliminar-cero-entero"
