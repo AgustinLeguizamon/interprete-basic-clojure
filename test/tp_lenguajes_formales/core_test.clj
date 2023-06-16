@@ -189,10 +189,17 @@
   (testing "Prueba de la funcion: continuar-linea"
     ;; este test imprime el error en pantalla cuando se corre lein test
     (is (= (continuar-linea [(list '(10 (PRINT X)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [] [] [] 0 {}]) [nil [(list (list 10 '(PRINT X)) (list 15 '(X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [] [] [] 0 {}]]))
-    (is (= (continuar-linea [(list '(10 (PRINT X)) '(15 (GOSUB 100) (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [[15 2]] [] [] 0 {}]) [:omitir-restante  [ (list ( list 10 '(PRINT X)) (list 15 '(GOSUB 100) '(X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [15 1] [] [] [] 0 {}]])) 
+    (is (= (continuar-linea [(list '(10 (PRINT X)) '(15 (GOSUB 100) (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [[15 2]] [] [] 0 {}]) [:omitir-restante  [(list (list 10 '(PRINT X)) (list 15 '(GOSUB 100) '(X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [15 1] [] [] [] 0 {}]]))
     (is (= (continuar-linea [(list '(10 (PRINT X)) '(15 (GOSUB 100) (X = X + 1)) (list 20 (list 'NEXT 'I))) [20 3] [[15 2]] [] [] 0 {}]) [:omitir-restante  [(list (list 10 '(PRINT X)) (list 15 '(GOSUB 100) '(X = X + 1)) (list 20 '(NEXT I))) [15 1] [] [] [] 0 {}]]))
     (is (= (continuar-linea [(list '(10 (PRINT X)) '(15 (GOSUB 100) (X = X + 1))) [20 3] [[15 2]] [] [] 0 {}]) [:omitir-restante  [(list (list 10 '(PRINT X)) (list 15 '(GOSUB 100) '(X = X + 1))) [15 1] [] [] [] 0 {}]]))
-    (is (= (continuar-linea [(list '(15 (GOSUB 100) (X = X + 1))) [20 3] [[15 2]] [] [] 0 {}]) [:omitir-restante  [(list '(15 (GOSUB 100) (X = X + 1))) [15 1] [] [] [] 0 {}]]))
-    
-    ))
+    (is (= (continuar-linea [(list '(15 (GOSUB 100) (X = X + 1))) [20 3] [[15 2]] [] [] 0 {}]) [:omitir-restante  [(list '(15 (GOSUB 100) (X = X + 1))) [15 1] [] [] [] 0 {}]]))))
+
+
+(deftest aplicar-test
+  (testing "Prueba de la funcion: aplicar"
+    (is (= (aplicar '< 2 1 [10 1]) 0))
+    (is (= (aplicar '< 0 1 [10 1]) -1))
+    (is (= (aplicar '> 0 1 [10 1]) 0))
+    (is (= (aplicar '<= 1 1 [10 1]) -1))
+    (is (= (aplicar '>= 2 1 [10 1]) -1))))
 

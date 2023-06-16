@@ -50,6 +50,9 @@
 
 (def indice-amb {:prog-mem 0, :prog-ptrs 1, :gosub-return-stack 2, :hash-map 6})
 
+(defn spy
+  ([x] (do (prn x) x))
+  ([msg x] (do (print msg) (print ": ") (prn x) x)))
 
 (defn get-hash-map-amb [amb]
   (last amb))
@@ -123,6 +126,31 @@
 ; evaluar-linea: recibe una lista de sentencias y las evalua
 ; mientras sea posible hacerlo
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(comment
+
+  ;; FIXME
+  (evaluar-linea (list '(IF N < 1 THEN GOTO 90)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  ;; OK
+  (expandir-nexts (list '(IF N < 1 THEN GOTO 90)))
+  ;; OK
+  (anular-invalidos '(IF N < 1 THEN GOTO 90))
+  ;; aca esta el null pointer
+  (evaluar '(IF N < 1 THEN GOTO 90) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  
+  (evaluar-linea (list (list 'INPUT "HOW MANY STARS DO YOU WANT" (symbol ";") 'N)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+
+  ;; OK
+  (evaluar-linea (list '(S = 3)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  (evaluar-linea (list '(S$ = "")) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+
+  ;; OK
+  (expandir-nexts (list '(S$ = "")))
+
+  (anular-invalidos '(S$ = ""))
+  
+  :rcf)
+
 (defn evaluar-linea
   ([sentencias amb]
    (let [sentencias-con-nexts-expandidos (expandir-nexts sentencias)]
@@ -356,6 +384,13 @@
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(X$ + " MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
 
+  ;; FIXME
+  (calcular-expresion '(N < 1) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  ;; calcular-rpn tira el overflow
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(N < 1) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N 2}]))) [10 1])
+  
+  (calcular-rpn '(2 1 <) [10 1])
+
   :rcf)
 
 (defn calcular-expresion [expr amb]
@@ -441,6 +476,12 @@
   (calcular-rpn '(3 4 +) [(['() [10 1] [] [] [] 0 '{}] 1)])
   (calcular-rpn '(3 4 -) (['() [10 1] [] [] [] 0 '{}] 1))
 
+  ;; FIXME
+  (calcular-rpn '(2 1 <) [10 1])
+  (calcular-rpn '(1 2 <) [10 1])
+
+  (aplicar '< 2 1 [10 1])
+  
   :rcf)
 
 (defn calcular-rpn [tokens nro-linea]
@@ -548,6 +589,15 @@
   (evaluar (list 'LOAD "HOLA") [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
   (evaluar (list 'LOAD 'STARS.BAS) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
   
+  ;; FIXME
+  (evaluar '(IF N < 1 THEN GOTO 90) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  ;; aca esta el overflow error
+  (calcular-expresion '(N < 1) [() [:ejecucion-inmediata 0] [] [] [] 0 {}]) 
+  (calcular-expresion '(N < 1) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+
+  (evaluar '(S$ = "") [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  (evaluar '(S = 3) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  
   :rcf)
 
 (defn evaluar [sentencia amb]
@@ -627,6 +677,9 @@
       NEXT (if (<= (count (next sentencia)) 1)
              (retornar-al-for amb (fnext sentencia))
              (do (dar-error 16 (amb 1)) [nil amb]))  ; Syntax error
+      END (if (<= (count (next sentencia)) 0)
+             [:sin-errores amb]
+             (do (dar-error 16 (amb 1)) [nil amb]))
       (if (= (second sentencia) '=)
         (let [resu (ejecutar-asignacion sentencia amb)]
           (if (nil? resu)
@@ -641,7 +694,17 @@
 ; nil)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (comment
-  (aplicar '+ "HOLA" " MUNDO" 10)
+  (aplicar '+ "HOLA" " MUNDO" [10 1])
+  (aplicar '< 2 1 [10 1])
+  (aplicar '< 0 1 [10 1])
+
+  (aplicar 'AND 0 0 [10 1])
+  
+  (true? -1)
+  (true? 0)
+
+  (if (and (not= 1 0) (not= 1 0)) -1 0)
+  
   :rcf)
 
 (defn aplicar
@@ -664,6 +727,10 @@
            (str operando1 operando2)
            (+ operando1 operando2))
        - (- operando1 operando2)
+       < (if (< (+ 0 operando1) (+ 0 operando2)) -1 0)
+       > (if (> (+ 0 operando1) (+ 0 operando2)) -1 0)
+       >= (if (>= (+ 0 operando1) (+ 0 operando2)) -1 0)
+       <= (if (<= (+ 0 operando1) (+ 0 operando2)) -1 0)
        / (if (= operando2 0) (dar-error 133 nro-linea) (/ operando1 operando2))  ; Division by zero error
        AND (let [op1 (+ 0 operando1), op2 (+ 0 operando2)] (if (and (not= op1 0) (not= op2 0)) -1 0))
        MID$ (if (< operando2 1)
@@ -751,7 +818,7 @@
 ;; PREGUNTA RESPONDIDA: lista de simbolos equivale a expresión??
 ;; numero, variable, string, palabra-reservada son simbolos validos lo que no entra, es invalido
 
-;; FIXME: ver de integrar las funcioens variable-string? float? integer?
+;; TODO: ver de integrar las funcioens variable-string? float? integer?
 
 (comment
 
@@ -762,6 +829,7 @@
   (anular-invalido '&)
 
   (anular-invalidos '(IF X & * Y < 12 THEN LET ! X = 0))
+  (anular-invalidos '(X$ = ""))
   :rcf)
 
 (defn anular-invalido [simbolo]
@@ -785,9 +853,7 @@
 ; user=> (cargar-linea '(15 (X = X - 1)) ['((10 (PRINT X)) (15 (X = X + 1)) (20 (X = 100))) [:ejecucion-inmediata 0] [] [] [] 0 {}])
 ; [((10 (PRINT X)) (15 (X = X - 1)) (20 (X = 100))) [:ejecucion-inmediata 0] [] [] [] 0 {}]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn spy
-  ([x] (do (prn x) x))
-  ([msg x] (do (print msg) (print ": ") (prn x) x)))
+
 
 
 (defn iguales? [nro-nueva-linea linea-amb]
@@ -826,6 +892,11 @@
   (expandir-nexts (list '(PRINT X + 10) (list 'NEXT 'A (symbol ",") 'B) (list 'NEXT 'C (symbol ",") 'D)))
   (expandir-nexts (list '(PRINT X + 10) (list 'NEXT 'A)))
 
+  (expandir-nexts '(PRINT))
+  
+  (expandir-nexts (list (list 'IF 'N '< 1 'THEN 'GOTO 90)))
+
+  
 
   :rcf)
 
@@ -842,9 +913,6 @@
 
 (defn expandir-sentencia-con-next [n]
   (map crear-lista-con-next (filter no-es-coma? n)))
-
-(defn expandir-sentencia-si-tiene-next [n]
-  (if (and (= 'NEXT (first n)) (in? n (symbol ","))) (expandir-sentencia-con-next (rest n)) n))
 
 (defn expandir-nexts [n]
   (cond
@@ -1272,9 +1340,7 @@
 (comment
 
   (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}])
-  (preprocesar-expresion '(X + . / Y% * Z) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 5 Y% 2}])
-
-  ;; FIXME
+  (preprocesar-expresion '(X + . / Y% * Z) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 5 Y% 2}]) 
   (preprocesar-expresion '("HOLA") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}])
   
   (variable-string? "HOLA")
@@ -1497,6 +1563,9 @@
   (eliminar-cero-decimal 10.0000)
   (eliminar-cero-decimal 'A)
   (eliminar-cero-decimal "HOLA")
+  
+  ;; NO deberia recibir un booleano nunca
+  (eliminar-cero-decimal false)
 
   :rcf)
 
