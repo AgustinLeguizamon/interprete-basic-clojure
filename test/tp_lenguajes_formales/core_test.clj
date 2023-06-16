@@ -68,7 +68,7 @@
     (is (= (palabra-reservada? 'RUn) false)))
   )
 
-(deftest anular-invalido-test
+(deftest anular-invalidos-test
   (testing "Prueba de la funcion: anular-invalidos"
     (is (= (anular-invalidos '(IF X & * Y < 12 THEN LET ! X = 0)) '(IF X nil * Y < 12 THEN LET nil X = 0)))))
 
@@ -83,29 +83,31 @@
     (is ( = (eliminar-cero-entero -1.5) "-1.5"))
     (is ( = (eliminar-cero-entero 0.5) " .5"))
     (is ( = (eliminar-cero-entero -0.5) "-.5"))
+    (is (= (eliminar-cero-entero "HOLA") "HOLA"))
     )
   )
 
 (deftest variable-integer?-test
-  (testing "Prueba de la funcion: variable-integer?") 
+  (testing "Prueba de la funcion: variable-integer?"
   (is (= (variable-integer? 'X%) true))
   (is (= (variable-integer? 'X) false))
-  (is (= (variable-integer? 'X$) false)))
+  (is (= (variable-integer? 'X$) false))))
 
 (deftest variable-string?-test
-  (testing "Prueba de la funcion: variable-string?")
+  (testing "Prueba de la funcion: variable-string?"
   (is (= (variable-string? 'X%) false))
   (is (= (variable-string? 'X) false))
-  (is (= (variable-string? 'X$) true)))
+  (is (= (variable-string? 'X$) true))))
 
 (deftest variable-float?-test
-  (testing "Prueba de la funcion: variable-string?")
+  (testing "Prueba de la funcion: variable-float?"
   (is (= (variable-float? 'X%) false))
   (is (= (variable-float? 'X) true))
-  (is (= (variable-float? 'X$) false)))
+  (is (= (variable-float? 'X$) false))
+  (is (= (variable-float? "HOLA") false))))
 
 (deftest operador?-test
-  (testing "Prueba de la funcion: operador?")
+  (testing "Prueba de la funcion: operador?"
   (is (= (operador? '+) true))
   (is (= (operador? '-) true))
   (is (= (operador? '*) true))
@@ -116,7 +118,7 @@
   (is (= (operador? (symbol "+")) true))
   (is (= (operador? (symbol "^")) true))
   (is (= (operador? (symbol "++")) false))
-  (is (= (operador? (symbol "%")) false)))
+  (is (= (operador? (symbol "%")) false))))
 
 (deftest aridad-test
   (testing "Prueba de la funcion: aridad"
@@ -155,6 +157,7 @@
     (is (= (eliminar-cero-decimal 1.0) 1))
     (is (= (eliminar-cero-decimal 10.0000) 10))
     (is (= (eliminar-cero-decimal 'A) 'A))
+    (is (= (eliminar-cero-decimal "HOLA") "HOLA"))
     ))
 
 (deftest preprocesar-expresion-test

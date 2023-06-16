@@ -341,19 +341,12 @@
 ; user=> (calcular-expresion '(X + 5) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}])
 ; 7
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(comment
-  (calcular-expresion '(X + 5) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}])
-  (calcular-expresion '("HOLA" + "MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}])
-
-  (calcular-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}])
-  (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]) 
-  (desambiguar (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))
-  
-  (shunting-yard (desambiguar (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) 
-  
-  ;; falla en calcular-rpn al parecer
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) (['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}] 1))
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(X$ + " MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) (['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}] 1))
+(comment 
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(X$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '("HOLA") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '("HOLA" + "MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(X$ + " MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
 
   :rcf)
 
@@ -481,9 +474,10 @@
 
 (comment
 
-  (imprimir '(x) [() [:ejecucion-inmediata 0] [] [] [] 0 {'x 5}])
-  (imprimir '("HOLA" + X + "CHAU") [() [:ejecucion-inmediata 0] [] [] [] 0 {'X 01.50}])
-
+  (imprimir '(X) [() [:ejecucion-inmediata 0] [] [] [] 0 {'X -05.50}])
+  (imprimir '("HOLA") [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  (imprimir '("HOLA" + "CHAU") [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  
   :rcf)
 
 (defn imprimir
@@ -909,6 +903,8 @@
   (variable-float? 1)
   (variable-float? 'X%)
   (variable-float? 'X$)
+  
+  (variable-float? "HOLA")
 
   :rcf)
 
@@ -918,7 +914,7 @@
 (defn variable-float? [x]
   (cond
     (palabra-reservada? x) false
-    (not (nil? (empieza-con-letra? x))) (not (nil? (re-matches #".*[A-Z0-9]$" (str x))))
+    (and (symbol? x) (not (nil? (empieza-con-letra? x)))) (not (nil? (re-matches #".*[A-Z0-9]$" (str x))))
     :else false))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1226,6 +1222,13 @@
   (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}])
   (preprocesar-expresion '(X + . / Y% * Z) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 5 Y% 2}])
 
+  ;; FIXME
+  (preprocesar-expresion '("HOLA") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}])
+  
+  (variable-string? "HOLA")
+  (variable-integer? "HOLA")
+  (variable-float? "HOLA")
+
   :rcf)
 
 
@@ -1499,6 +1502,7 @@
   (eliminar-cero-entero-aux 0)
 
 
+  (eliminar-cero-entero "HOLA")
   (eliminar-cero-entero 'A)
   (eliminar-cero-entero 0)
   (eliminar-cero-entero 1.5)
@@ -1520,6 +1524,7 @@
 
 (defn eliminar-cero-entero [n]
   (cond
+    (string? n) n
     (symbol? n) (str n)
     (number? n) (eliminar-cero-entero-aux n)
     :else nil))
