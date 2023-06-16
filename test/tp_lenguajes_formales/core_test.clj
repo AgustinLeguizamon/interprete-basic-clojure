@@ -184,3 +184,15 @@
     (is (= (ejecutar-asignacion '(X = 5) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}]) '[((10 (PRINT X))) [10 1] [] [] [] 0 {X 5}]))
     (is (= (ejecutar-asignacion '(X = X + 1) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}]) '[((10 (PRINT X))) [10 1] [] [] [] 0 {X 3}]))
     (is (= (ejecutar-asignacion '(X$ = X$ + " MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]) '[((10 (PRINT X))) [10 1] [] [] [] 0 {X$ "HOLA MUNDO"}]))))
+
+(deftest continuar-linea-test
+  (testing "Prueba de la funcion: continuar-linea"
+    ;; este test imprime el error en pantalla cuando se corre lein test
+    (is (= (continuar-linea [(list '(10 (PRINT X)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [] [] [] 0 {}]) [nil [(list (list 10 '(PRINT X)) (list 15 '(X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [] [] [] 0 {}]]))
+    (is (= (continuar-linea [(list '(10 (PRINT X)) '(15 (GOSUB 100) (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [[15 2]] [] [] 0 {}]) [:omitir-restante  [ (list ( list 10 '(PRINT X)) (list 15 '(GOSUB 100) '(X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [15 1] [] [] [] 0 {}]])) 
+    (is (= (continuar-linea [(list '(10 (PRINT X)) '(15 (GOSUB 100) (X = X + 1)) (list 20 (list 'NEXT 'I))) [20 3] [[15 2]] [] [] 0 {}]) [:omitir-restante  [(list (list 10 '(PRINT X)) (list 15 '(GOSUB 100) '(X = X + 1)) (list 20 '(NEXT I))) [15 1] [] [] [] 0 {}]]))
+    (is (= (continuar-linea [(list '(10 (PRINT X)) '(15 (GOSUB 100) (X = X + 1))) [20 3] [[15 2]] [] [] 0 {}]) [:omitir-restante  [(list (list 10 '(PRINT X)) (list 15 '(GOSUB 100) '(X = X + 1))) [15 1] [] [] [] 0 {}]]))
+    (is (= (continuar-linea [(list '(15 (GOSUB 100) (X = X + 1))) [20 3] [[15 2]] [] [] 0 {}]) [:omitir-restante  [(list '(15 (GOSUB 100) (X = X + 1))) [15 1] [] [] [] 0 {}]]))
+    
+    ))
+

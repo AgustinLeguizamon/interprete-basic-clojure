@@ -47,7 +47,15 @@
 (declare eliminar-cero-decimal)           ; IMPLEMENTAR
 (declare eliminar-cero-entero)            ; IMPLEMENTAR
 
-(declare spy)
+
+(def indice-amb {:prog-mem 0, :prog-ptrs 1, :gosub-return-stack 2, :hash-map 6})
+
+
+(defn get-hash-map-amb [amb]
+  (last amb))
+
+(defn get-amb-prog-ptrs [amb]
+  (nth amb (indice-amb :prog-ptrs)))
 
 (defn -main
   "Ejemplo de Proyecto en Clojure"
@@ -534,13 +542,12 @@
 ; actualizado
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (comment
+  
 
-  (def sentencia (list 'PRINT 'HOLA))
-
-  (evaluar (list 'PRINT) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  (evaluar sentencia [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  (or (contains? (set sentencia) nil) (and (palabra-reservada? (first sentencia)) (= (second sentencia) '=)))
-  (first sentencia)
+  (evaluar (list 'PRINT "HOLA") [() [:ejecucion-inmediata 0] [] [] [] 0 {}]) 
+  (evaluar (list 'LOAD "HOLA") [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  (evaluar (list 'LOAD 'STARS.BAS) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  
   :rcf)
 
 (defn evaluar [sentencia amb]
@@ -872,8 +879,12 @@
 
   :rcf)
 
+(defn dar-error-aux [prog-ptrs]
+  (if (number? (first prog-ptrs)) (str " IN " (first prog-ptrs)) nil)
+  )
+
 (defn dar-error [cod prog-ptrs]
-  (let [nro-linea (if (number? (first prog-ptrs)) (str " IN " (first prog-ptrs)) nil)]
+  (let [nro-linea (dar-error-aux prog-ptrs)]
     (cond
       (string? cod) (print (str cod nro-linea))
       :else (print (str (buscar-mensaje cod) nro-linea)))))
@@ -1135,7 +1146,50 @@
 ; user=> (continuar-linea [(list '(10 (PRINT X)) '(15 (GOSUB 100) (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [[15 2]] [] [] 0 {}])
 ; [:omitir-restante [((10 (PRINT X)) (15 (GOSUB 100) (X = X + 1)) (20 (NEXT I , J))) [15 1] [] [] [] 0 {}]]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn continuar-linea [amb])
+
+(comment
+
+  (continuar-linea [(list '(10 (PRINT X)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [] [] [] 0 {}])
+
+  (continuar-linea [(list '(10 (PRINT X)) '(15 (GOSUB 100) (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [[15 2]] [] [] 0 {}])
+
+  (def amb [(list '(10 (PRINT X)) '(15 (GOSUB 100) (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [[15 2]] [] [] 0 {}])
+  
+  ;; [(prog-mem)  [prog-ptrs]  [gosub-return-stack]  [for-next-stack]  [data-mem]  data-ptr  {var-mem}]
+  
+  (assoc amb (indice-amb :prog-ptrs) (get-amb-gosub-return-stack amb))
+
+  (get-amb-gosub-return-stack [(list '(10 (PRINT X)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [] [] [] 0 {}])
+
+  :rcf)
+
+
+(defn get-amb-gosub-return-stack
+  "devuelve un prog-ptrs"
+  [amb] 
+  (first (nth amb (indice-amb :gosub-return-stack)))
+  )
+
+(defn reducir-sentencias-restantes [gosub-return-stack]
+  (let [sentencias-restantes (dec (nth gosub-return-stack 1))]
+  (assoc gosub-return-stack 1 (if (neg? sentencias-restantes) 0 sentencias-restantes))
+  ))
+
+(defn continuar-linea-aux [amb]
+  (cond
+    (nil? (get-amb-gosub-return-stack amb)) nil
+    :else (assoc (assoc amb (indice-amb :prog-ptrs) (reducir-sentencias-restantes (get-amb-gosub-return-stack amb))) (indice-amb :gosub-return-stack) '[])
+    )
+  
+  )
+
+(defn continuar-linea [amb]
+  (let [resu (continuar-linea-aux amb)]
+    (if (nil? resu)
+      [(dar-error 22 (get-amb-prog-ptrs amb)) amb]
+      [:omitir-restante resu]))
+  
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; extraer-data: recibe la representación intermedia de un programa
@@ -1193,18 +1247,16 @@
 
   :rcf)
 
-(defn getHashMapAmbiente [amb]
-  (last amb))
 
-(def indiceAmb {:lineas 0, :puntero 1, :hash-map 6})
 
-(indiceAmb :hash-map)
+
+(indice-amb :hash-map)
 
 (defn ejecutar-asignacion [sentencia amb]
   (let [variable (first sentencia)
         expresion (drop 2 sentencia)
         calculo-expresion (calcular-expresion expresion amb)]
-    (assoc amb (indiceAmb :hash-map) (assoc (getHashMapAmbiente amb) variable calculo-expresion))
+    (assoc amb (indice-amb :hash-map) (assoc (get-hash-map-amb amb) variable calculo-expresion))
     ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1251,7 +1303,7 @@
       :else simbolo)))
 
 (defn preprocesar-expresion [expr amb]
-  (map (partial preprocesar-expresion-aux (getHashMapAmbiente amb)) expr))
+  (map (partial preprocesar-expresion-aux (get-hash-map-amb amb)) expr))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; desambiguar: recibe un expresion y la retorna sin los + unarios,
