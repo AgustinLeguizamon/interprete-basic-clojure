@@ -155,7 +155,12 @@
 
   ;; OK
   (evaluar-linea (list (list 'PRINT 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")"))) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}])
+
+  ;; FIXME : error linea 30 sum.bas seguro que es por el LET
+  (evaluar-linea (list (list 'LET 'N '= '1)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  (evaluar (list (list 'LET 'N '= '1)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
   
+
   :rcf)
 
 (defn evaluar-linea
@@ -630,6 +635,11 @@
   ;; OK
   (imprimir (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}])
 
+  ;; FIXME
+  (evaluar (list 'LET 'N '= '1) [() [:ejecucion-inmediata 0] [] [] [] 0 {}]) 
+  
+  (evaluar (list 'N '= '1) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+
   :rcf)
 
 (defn evaluar [sentencia amb]
@@ -711,6 +721,12 @@
              (do (dar-error 16 (amb 1)) [nil amb]))  ; Syntax error
       END (if (<= (count (next sentencia)) 0)
              [:sin-errores amb]
+             (do (dar-error 16 (amb 1)) [nil amb]))
+      LET (if (= (second (rest sentencia)) '=)
+             (let [resu (ejecutar-asignacion (spy "sentencia" (rest sentencia)) amb)]
+               (if (nil? resu)
+                 [nil amb]
+                 [:sin-errores resu]))
              (do (dar-error 16 (amb 1)) [nil amb]))
       (if (= (second sentencia) '=)
         (let [resu (ejecutar-asignacion sentencia amb)]
