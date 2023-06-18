@@ -74,6 +74,7 @@
     (is (= (anular-invalidos '(X$ = "")) '(X$ = "")))
     (is (= (anular-invalidos '(X$ = "HOLA")) '(X$ = "HOLA")))
     (is (= (anular-invalidos (list 'PRINT 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")"))) (list 'PRINT 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")"))))
+    (is (= (anular-invalidos (list 'PRINT "ENTER A" (symbol ":") 'INPUT 'A (symbol ":") 'PRINT "ENTER B" (symbol ":") 'INPUT 'B)) (list 'PRINT "ENTER A" (symbol ":") 'INPUT 'A (symbol ":") 'PRINT "ENTER B" (symbol ":") 'INPUT 'B)))
     ))
 
 (deftest eliminar-cero-entero-test
@@ -209,4 +210,10 @@
     (is (= (shunting-yard (list 'MID$ (symbol "(") "HOLA" (symbol ",") 1 (symbol ")"))) (list "HOLA" 1 'MID$)))
     
     ))
+
+(deftest calcular-rpn-test
+  (testing "Prueba de la funcion: calcular-rpn"
+    (is (= (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 0 -1 'OR) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0]) -1))
+    
+    )) 
 

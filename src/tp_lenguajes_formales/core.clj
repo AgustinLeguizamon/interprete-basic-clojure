@@ -156,10 +156,19 @@
   ;; OK
   (evaluar-linea (list (list 'PRINT 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")"))) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}])
 
-  ;; FIXME : error linea 30 sum.bas seguro que es por el LET
+  ;; OK
   (evaluar-linea (list (list 'LET 'N '= '1)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
   (evaluar (list (list 'LET 'N '= '1)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  
+
+  ;; IMPORTANTE: la linea primero pasa por strings a tokens que hace cosas con simbolos como :
+  ;; para crear varias sentencias asi que CUIDADO al copy pastear las entradas en evaluar-linea
+
+  ;; FIXME
+  (evaluar-linea (list (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  (expandir-nexts (list (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20)))
+  (anular-invalidos (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20))
+  ;; OVERFLOW
+  (evaluar (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
 
   :rcf)
 
@@ -397,13 +406,17 @@
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(X$ + " MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'LEN (symbol "(") 'N$ (symbol ")")) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}]))) [10 1])
  
+  ;; OK
   (calcular-expresion (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}])
-
-  ;; SYNTAX ERROR
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}]))) [10 1])
-  ;; shunting yard me devuelve (mid$ "hola" 1) y creo que esta mal, pq el token va al principio
+  
 
-
+  ;; FIXME
+  (calcular-expresion (list 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  ;; no se si shunting-yard lo esta ordenando bien pero puede ser que calcular-rpn este fallando
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) ([() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}] 1))
+  
+  
   :rcf)
 
 (defn calcular-expresion [expr amb]
@@ -514,13 +527,29 @@
   (calcular-rpn '(3 4 -) (['() [10 1] [] [] [] 0 '{}] 1))
   (calcular-rpn '(2 1 <) [10 1])
   (calcular-rpn '(1 2 <) [10 1])
-  
+
   (aplicar 'LEN "HOLA" [10 1])
 
   ;; al parecer el problema esta en shunting-yard que no pone el len al final
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'LEN (symbol "(") 'N$ (symbol ")")) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}]))) [10 1])
   ;; OK
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}]))) [10 1])
+
+  ;; FIXME 
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
+  
+  ;; vamos a ir encontrando el shunting-yard de cada expresion por separada asi me aseguro de que aplicar este tomando los valores correctos
+  ;; OK
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '<= '0) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
+  
+  ;; se agrega OR a aplicar
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 0 -1 'OR) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list -1 -1 'OR) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list -1 0 'OR) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 0 0 'OR) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
+  
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '<= '0 'OR 'B '<= '0) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
+
   
   :rcf)
 
@@ -635,10 +664,14 @@
   ;; OK
   (imprimir (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}])
 
-  ;; FIXME
-  (evaluar (list 'LET 'N '= '1) [() [:ejecucion-inmediata 0] [] [] [] 0 {}]) 
-  
+  ;; OK
+  (evaluar (list 'LET 'N '= '1) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
   (evaluar (list 'N '= '1) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+
+  ;; FIXME
+  (evaluar (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  ;; OVERFLOW
+  (calcular-expresion (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
 
   :rcf)
 
@@ -781,6 +814,7 @@
        <= (if (<= (+ 0 operando1) (+ 0 operando2)) -1 0)
        / (if (= operando2 0) (dar-error 133 nro-linea) (/ operando1 operando2))  ; Division by zero error
        AND (let [op1 (+ 0 operando1), op2 (+ 0 operando2)] (if (and (not= op1 0) (not= op2 0)) -1 0))
+       OR (let [op1 (+ 0 operando1), op2 (+ 0 operando2)] (if (or (= op1 -1) (= op2 -1)) -1 0))
        MID$ (if (< operando2 1)
               (dar-error 53 nro-linea)  ; Illegal quantity error
               (let [ini (dec operando2)] (if (>= ini (count operando1)) "" (subs operando1 ini)))))))
@@ -879,17 +913,16 @@
   (anular-invalidos '(IF X & * Y < 12 THEN LET ! X = 0))
   (anular-invalidos '(X$ = ""))
   (anular-invalidos '(X$ = "HOLA"))
-
   (anular-invalidos '(L = LEN (symbol "(") N$ (symbol ")")))
-
   (anular-invalidos (list 'PRINT 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")))
+  (anular-invalidos (list 'PRINT "ENTER A" (symbol ":") 'INPUT 'A (symbol ":") 'PRINT "ENTER B" (symbol ":") 'INPUT 'B))
   
   :rcf)
 
 (defn anular-invalido [simbolo]
   (cond 
     (palabra-reservada? simbolo) simbolo
-    (empty? (re-seq #"\;|\=|\+|\-|\*|\/|\^|\<|\>|[A-Z]|[0-9]|^$|\(|\)|\," (str simbolo))) nil
+    (empty? (re-seq #"\;|\=|\+|\-|\*|\/|\^|\<|\>|[A-Z]|[0-9]|^$|\(|\)|\,|\:" (str simbolo))) nil
     :else simbolo))
 
 (defn anular-invalidos [sentencia]
@@ -1410,9 +1443,10 @@
   (preprocesar-expresion '(LEN (N$)) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}])
   
   (first (second '(LEN (N$))))
-
-  (preprocesar-expresion (flatten '(LEN (N$))) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}])
-
+  
+  ;; FIXME: no separa simbolos pegados
+  (preprocesar-expresion (list 'A<=0 'OR 'B<=0 'OR 'INT (symbol "(") 'A (symbol ")") '<>A 'OR 'INT (symbol "(") 'B (symbol ")") '<>B) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  
   :rcf)
 
 
