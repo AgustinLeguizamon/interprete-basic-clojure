@@ -129,7 +129,6 @@
 
 (comment
 
-  ;; FIXME
   (evaluar-linea (list '(IF N < 1 THEN GOTO 90)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
   ;; OK
   (expandir-nexts (list '(IF N < 1 THEN GOTO 90)))
@@ -137,7 +136,7 @@
   (anular-invalidos '(IF N < 1 THEN GOTO 90))
   ;; aca esta el null pointer
   (evaluar '(IF N < 1 THEN GOTO 90) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  
+
   (evaluar-linea (list (list 'INPUT "HOW MANY STARS DO YOU WANT" (symbol ";") 'N)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
 
   ;; OK
@@ -148,6 +147,14 @@
   (expandir-nexts (list '(S$ = "")))
 
   (anular-invalidos '(S$ = ""))
+
+  ;; OK
+  (evaluar-linea (list (list 'L '= 'LEN (symbol "(") 'N$ (symbol ")"))) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA"}])
+  (expandir-nexts (list '(L = LEN (symbol "(") N$ (symbol ")"))))
+  (evaluar (list 'L '= 'LEN (symbol "(") 'N$ (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA"}])
+
+  ;; OK
+  (evaluar-linea (list (list 'PRINT 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")"))) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}])
   
   :rcf)
 
@@ -383,13 +390,14 @@
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '("HOLA" + "MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(X$ + " MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'LEN (symbol "(") 'N$ (symbol ")")) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}]))) [10 1])
+ 
+  (calcular-expresion (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}])
 
-  ;; FIXME
-  (calcular-expresion '(N < 1) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  ;; calcular-rpn tira el overflow
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(N < 1) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N 2}]))) [10 1])
-  
-  (calcular-rpn '(2 1 <) [10 1])
+  ;; SYNTAX ERROR
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}]))) [10 1])
+  ;; shunting yard me devuelve (mid$ "hola" 1) y creo que esta mal, pq el token va al principio
+
 
   :rcf)
 
@@ -417,6 +425,12 @@
 ; desambiguar-mid: recibe una expresion y la retorna con los
 ; MID$ ternarios reemplazados por MID3$ 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(comment
+  
+  (desambiguar-mid (list 'PRINT 'MID$ (symbol "(") 'N$, 'I (symbol ")")))
+
+  :rcf)
+
 (defn desambiguar-mid
   ([expr]
    (cond
@@ -448,6 +462,24 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (comment
   (shunting-yard '("HOLA" + "MUNDO"))
+
+  (shunting-yard '(LEN "HOLA"))
+
+  (shunting-yard (desambiguar (preprocesar-expresion (list 'LEN (symbol "(") 'N$ (symbol ")")) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}])))
+
+  (count (desambiguar (preprocesar-expresion (list 'LEN (symbol "(") 'N$ (symbol ")")) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}])))
+
+  (shunting-yard (list 'LEN (symbol "(") "HOLA" (symbol ")")))
+  (shunting-yard (list 'LEN "HOLA"))
+
+  (shunting-yard (list (symbol "(") 1 '+ 2 (symbol ")") '* 3))
+
+  (count (shunting-yard (list 'LEN (symbol "(") "HOLA" (symbol ")"))))
+
+  (shunting-yard (desambiguar (preprocesar-expresion (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}])))
+  (shunting-yard (list 'MID$ (symbol "(") "HOLA" (symbol ",") 1 (symbol ")")))
+  (calcular-rpn (list "HOLA" 1 'MID$) [10 1])
+
   :rcf)
 
 (defn shunting-yard [tokens]
@@ -475,12 +507,15 @@
   (calcular-rpn '("HOLA" " MUNDO" +) (['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}] 1))
   (calcular-rpn '(3 4 +) [(['() [10 1] [] [] [] 0 '{}] 1)])
   (calcular-rpn '(3 4 -) (['() [10 1] [] [] [] 0 '{}] 1))
-
-  ;; FIXME
   (calcular-rpn '(2 1 <) [10 1])
   (calcular-rpn '(1 2 <) [10 1])
+  
+  (aplicar 'LEN "HOLA" [10 1])
 
-  (aplicar '< 2 1 [10 1])
+  ;; al parecer el problema esta en shunting-yard que no pone el len al final
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'LEN (symbol "(") 'N$ (symbol ")")) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}]))) [10 1])
+  ;; OK
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}]))) [10 1])
   
   :rcf)
 
@@ -526,6 +561,7 @@
   (imprimir '(X) [() [:ejecucion-inmediata 0] [] [] [] 0 {'X -05.50}])
   (imprimir '("HOLA") [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
   (imprimir '("HOLA" + "CHAU") [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  
   
   :rcf)
 
@@ -583,21 +619,17 @@
 ; actualizado
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (comment
-  
-
-  (evaluar (list 'PRINT "HOLA") [() [:ejecucion-inmediata 0] [] [] [] 0 {}]) 
-  (evaluar (list 'LOAD "HOLA") [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  (evaluar (list 'LOAD 'STARS.BAS) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  
-  ;; FIXME
-  (evaluar '(IF N < 1 THEN GOTO 90) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  ;; aca esta el overflow error
-  (calcular-expresion '(N < 1) [() [:ejecucion-inmediata 0] [] [] [] 0 {}]) 
-  (calcular-expresion '(N < 1) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
 
   (evaluar '(S$ = "") [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
   (evaluar '(S = 3) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  
+
+  (evaluar (list 'L '= 'LEN (symbol "(") 'N$ (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOlA"}])
+
+  ;; OK
+  (evaluar (list 'PRINT 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}])
+  ;; OK
+  (imprimir (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}])
+
   :rcf)
 
 (defn evaluar [sentencia amb]
@@ -831,12 +863,17 @@
   (anular-invalidos '(IF X & * Y < 12 THEN LET ! X = 0))
   (anular-invalidos '(X$ = ""))
   (anular-invalidos '(X$ = "HOLA"))
+
+  (anular-invalidos '(L = LEN (symbol "(") N$ (symbol ")")))
+
+  (anular-invalidos (list 'PRINT 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")))
+  
   :rcf)
 
 (defn anular-invalido [simbolo]
   (cond 
     (palabra-reservada? simbolo) simbolo
-    (empty? (re-seq #"\;|\=|\+|\-|\*|\/|\^|\<|\>|[A-Z]|[0-9]|^$" (str simbolo))) nil
+    (empty? (re-seq #"\;|\=|\+|\-|\*|\/|\^|\<|\>|[A-Z]|[0-9]|^$|\(|\)|\," (str simbolo))) nil
     :else simbolo))
 
 (defn anular-invalidos [sentencia]
@@ -897,6 +934,8 @@
   
   (expandir-nexts (list (list 'IF 'N '< 1 'THEN 'GOTO 90)))
 
+  (expandir-nexts '(L = LEN N$))
+  (expandir-nexts '(L = LEN (symbol "(") N$ (symbol ")")))
   
 
   :rcf)
@@ -1314,6 +1353,10 @@
   (ejecutar-asignacion '(X = X + 1) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}])
   (ejecutar-asignacion '(X$ = X$ + " MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}])
 
+  (ejecutar-asignacion '(L = LEN (N$)) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}])
+
+  (ejecutar-asignacion (list 'L '= 'LEN (symbol "(") 'N$ (symbol ")")) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}]) 
+  
   :rcf)
 
 
@@ -1347,6 +1390,12 @@
   (variable-string? "HOLA")
   (variable-integer? "HOLA")
   (variable-float? "HOLA")
+
+  (preprocesar-expresion '(LEN (N$)) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}])
+  
+  (first (second '(LEN (N$))))
+
+  (preprocesar-expresion (flatten '(LEN (N$))) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}])
 
   :rcf)
 
@@ -1432,13 +1481,15 @@
   (precedencia '*)
   (precedencia '-u)
   (precedencia 'MID$)
+  ;; TODO: quitar los  ^ pq no se usan en este tp
   (precedencia (symbol "^"))
 
   :rcf)
 
+;; TODO: a LEN le puse una precedencia de 7 para que este antes de los strings que tienen 8
 (defn precedencia [token]
   (cond
-    (= token (symbol "^")) 8
+    (= token (symbol ",")) 0
     :else (case token
             OR 1
             AND 2
@@ -1453,7 +1504,9 @@
             * 6
             / 6
             -u 7
-            8)))
+            LEN 7
+            MID$ 7
+            nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; aridad: recibe un token y retorna el valor de su aridad, por

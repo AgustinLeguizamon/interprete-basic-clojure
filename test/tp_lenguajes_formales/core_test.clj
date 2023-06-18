@@ -73,6 +73,7 @@
     (is (= (anular-invalidos '(IF X & * Y < 12 THEN LET ! X = 0)) '(IF X nil * Y < 12 THEN LET nil X = 0)))
     (is (= (anular-invalidos '(X$ = "")) '(X$ = "")))
     (is (= (anular-invalidos '(X$ = "HOLA")) '(X$ = "HOLA")))
+    (is (= (anular-invalidos (list 'PRINT 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")"))) (list 'PRINT 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")"))))
     ))
 
 (deftest eliminar-cero-entero-test
@@ -145,11 +146,7 @@
     (is (= (precedencia 'AND) 2))
     (is (= (precedencia '*) 6))
     (is (= (precedencia '-u) 7))
-    (is (= (precedencia 'MID$) 8))
-    (is (= (precedencia (symbol "^")) 8))
-    
-    )
-  )
+    (is (= (precedencia 'MID$) 7))))
 
 (deftest eliminar-cero-decimal-test
   (testing "Prueba de la funcion: eliminar-cero-decimal"
@@ -205,4 +202,11 @@
     (is (= (aplicar '> 0 1 [10 1]) 0))
     (is (= (aplicar '<= 1 1 [10 1]) -1))
     (is (= (aplicar '>= 2 1 [10 1]) -1))))
+
+
+(deftest shunting-yard-test
+  (testing "Prueba de la funcion: shunting-yard"
+    (is (= (shunting-yard (list 'MID$ (symbol "(") "HOLA" (symbol ",") 1 (symbol ")"))) (list "HOLA" 1 'MID$)))
+    
+    ))
 
