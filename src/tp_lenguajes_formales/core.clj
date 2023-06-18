@@ -535,20 +535,21 @@
   ;; OK
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}]))) [10 1])
 
-  ;; FIXME 
+  ;; OK
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
   
-  ;; vamos a ir encontrando el shunting-yard de cada expresion por separada asi me aseguro de que aplicar este tomando los valores correctos
   ;; OK
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '<= '0) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
-  
-  ;; se agrega OR a aplicar
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 0 -1 'OR) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list -1 -1 'OR) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list -1 0 'OR) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 0 0 'OR) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
-  
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '<= '0 'OR 'B '<= '0) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
+
+  ;; OK
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'INT (symbol "(") 'A (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0]) 
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list (symbol "(") 'A (symbol ")") '<> 'A) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list (symbol "(") 2 (symbol ")") '<> 1) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0]) 
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'INT (symbol "(") 2 (symbol ")") '<> 4) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
+  (calcular-rpn (list '2 'INT '4 '<>) [:ejecucion-inmediata 0])
+
+
 
   
   :rcf)
@@ -668,10 +669,11 @@
   (evaluar (list 'LET 'N '= '1) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
   (evaluar (list 'N '= '1) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
 
-  ;; FIXME
+  ;; Creo que no se puede probar por el GOTO
   (evaluar (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  ;; OVERFLOW
-  (calcular-expresion (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  
+  ;; OK
+  (calcular-expresion (list 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
 
   :rcf)
 
@@ -796,7 +798,8 @@
        -u (- operando)
        LEN (count operando)
        STR$ (if (not (number? operando)) (dar-error 163 nro-linea) (eliminar-cero-entero operando)) ; Type mismatch error
-       CHR$ (if (or (< operando 0) (> operando 255)) (dar-error 53 nro-linea) (str (char operando)))))) ; Illegal quantity error
+       CHR$ (if (or (< operando 0) (> operando 255)) (dar-error 53 nro-linea) (str (char operando)))
+       INT (int operando)))) ; Illegal quantity error 
   ([operador operando1 operando2 nro-linea]
    (if (or (nil? operando1) (nil? operando2))
      (dar-error 16 nro-linea)  ; Syntax error
@@ -812,6 +815,7 @@
        > (if (> (+ 0 operando1) (+ 0 operando2)) -1 0)
        >= (if (>= (+ 0 operando1) (+ 0 operando2)) -1 0)
        <= (if (<= (+ 0 operando1) (+ 0 operando2)) -1 0)
+       <> (if (not= (+ 0 operando1) (+ 0 operando2)) -1 0)
        / (if (= operando2 0) (dar-error 133 nro-linea) (/ operando1 operando2))  ; Division by zero error
        AND (let [op1 (+ 0 operando1), op2 (+ 0 operando2)] (if (and (not= op1 0) (not= op2 0)) -1 0))
        OR (let [op1 (+ 0 operando1), op2 (+ 0 operando2)] (if (or (= op1 -1) (= op2 -1)) -1 0))
@@ -1444,9 +1448,6 @@
   
   (first (second '(LEN (N$))))
   
-  ;; FIXME: no separa simbolos pegados
-  (preprocesar-expresion (list 'A<=0 'OR 'B<=0 'OR 'INT (symbol "(") 'A (symbol ")") '<>A 'OR 'INT (symbol "(") 'B (symbol ")") '<>B) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  
   :rcf)
 
 
@@ -1549,6 +1550,7 @@
             = 4
             <= 4
             >= 4
+            <> 4
             + 5
             - 5
             * 6
@@ -1556,6 +1558,7 @@
             -u 7
             LEN 7
             MID$ 7
+            INT 7
             nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1628,6 +1631,7 @@
     > 2
     <= 2
     >= 2
+    <> 2
     AND 2
     OR 2
     0))
