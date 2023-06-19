@@ -169,13 +169,18 @@
   (anular-invalidos (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20)) 
   (evaluar (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
 
-  ;; FIXME: OVERFLOW
-  (evaluar-linea (list (list 'LET 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B )) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
   ;; OK
+  (evaluar-linea (list (list 'LET 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B )) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
   (expandir-nexts (list (list 'LET 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B)))
-  (anular-invalidos (list 'LET 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B))
-  ;; OVERFLOW en evaluar
+  (anular-invalidos (list 'LET 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B)) 
   
+  ;; OK
+  (evaluar-linea (list (list 'LET 'P '= '.)) [() [:ejecucion-inmediata 0] [] [] [] 0 {'P 4, 'B 2}])
+  
+  ;; OK
+  (evaluar-linea (list (list 'IF 'P '= 1 'THEN 'PRINT 'X (symbol ";") " " (symbol ";"))) [() [:ejecucion-inmediata 0] [] [] [] 0 {'P 2}]) 
+  
+
   :rcf)
 
 (defn evaluar-linea
@@ -420,16 +425,8 @@
   (calcular-expresion (list 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) ([() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}] 1))
 
-  ;; FIXME: OVERFLOW
+  ;; OK
   (calcular-expresion (list 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
-
-  ;; parece un tema de shunting-yard
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0]) 
-  
-  ;; vamos a simplificar hasta que de un resultado
-  ;; funciona hasta que le pongo un * 2
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '* 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
 
   :rcf)
 
@@ -939,12 +936,14 @@
   (anular-invalidos (list 'PRINT 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")))
   (anular-invalidos (list 'PRINT "ENTER A" (symbol ":") 'INPUT 'A (symbol ":") 'PRINT "ENTER B" (symbol ":") 'INPUT 'B))
   
+  (anular-invalidos (list 'LET 'P '= '.))
+  (anular-invalidos (list 'IF 'P '= 1 'THEN 'PRINT 'X (symbol ";") " " (symbol ";")))
   :rcf)
 
 (defn anular-invalido [simbolo]
   (cond 
     (palabra-reservada? simbolo) simbolo
-    (empty? (re-seq #"\;|\=|\+|\-|\*|\/|\^|\<|\>|[A-Z]|[0-9]|^$|\(|\)|\,|\:" (str simbolo))) nil
+    (empty? (re-seq #"\;|\=|\+|\-|\*|\/|\^|\<|\>|[A-Z]|[0-9]|^$|^\s+$|\(|\)|\,|\:|\." (str simbolo))) nil
     :else simbolo))
 
 (defn anular-invalidos [sentencia]

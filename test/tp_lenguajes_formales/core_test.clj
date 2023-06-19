@@ -75,6 +75,9 @@
     (is (= (anular-invalidos '(X$ = "HOLA")) '(X$ = "HOLA")))
     (is (= (anular-invalidos (list 'PRINT 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")"))) (list 'PRINT 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")"))))
     (is (= (anular-invalidos (list 'PRINT "ENTER A" (symbol ":") 'INPUT 'A (symbol ":") 'PRINT "ENTER B" (symbol ":") 'INPUT 'B)) (list 'PRINT "ENTER A" (symbol ":") 'INPUT 'A (symbol ":") 'PRINT "ENTER B" (symbol ":") 'INPUT 'B)))
+    (is (= (anular-invalidos (list 'LET 'P '= '.)) (list 'LET 'P '= '.)))
+    (is (= (anular-invalidos (list 'IF 'P '= 1 'THEN 'PRINT 'X (symbol ";") " " (symbol ";"))) (list 'IF 'P '= 1 'THEN 'PRINT 'X (symbol ";") " " (symbol ";"))))
+    
     ))
 
 (deftest eliminar-cero-entero-test
