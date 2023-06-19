@@ -211,9 +211,10 @@
     
     ))
 
-(deftest calcular-rpn-test
+(deftest calcular-expresion-test
   (testing "Prueba de la funcion: calcular-rpn"
     (is (= (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 0 -1 'OR) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0]) -1))
     (is (= (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list (symbol "(") 2 (symbol ")") '<> 1) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0]) -1))
+    (is (= (calcular-expresion (list 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]) 0))
     )) 
 

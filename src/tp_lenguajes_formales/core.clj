@@ -163,13 +163,19 @@
   ;; IMPORTANTE: la linea primero pasa por strings a tokens que hace cosas con simbolos como :
   ;; para crear varias sentencias asi que CUIDADO al copy pastear las entradas en evaluar-linea
 
-  ;; FIXME
+  ;; OK pero falta definir linea 20 para que no rompa GOTO
   (evaluar-linea (list (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
   (expandir-nexts (list (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20)))
-  (anular-invalidos (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20))
-  ;; OVERFLOW
+  (anular-invalidos (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20)) 
   (evaluar (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
 
+  ;; FIXME: OVERFLOW
+  (evaluar-linea (list (list 'LET 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B )) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
+  ;; OK
+  (expandir-nexts (list (list 'LET 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B)))
+  (anular-invalidos (list 'LET 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B))
+  ;; OVERFLOW en evaluar
+  
   :rcf)
 
 (defn evaluar-linea
@@ -398,25 +404,33 @@
 ; user=> (calcular-expresion '(X + 5) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}])
 ; 7
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(comment 
+(comment
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(X$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '("HOLA") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '("HOLA" + "MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(X$ + " MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'LEN (symbol "(") 'N$ (symbol ")")) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}]))) [10 1])
- 
+
   ;; OK
   (calcular-expresion (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}])
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}]))) [10 1])
-  
 
-  ;; FIXME
+  ;; OK
   (calcular-expresion (list 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  ;; no se si shunting-yard lo esta ordenando bien pero puede ser que calcular-rpn este fallando
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) ([() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}] 1))
+
+  ;; FIXME: OVERFLOW
+  (calcular-expresion (list 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
+
+  ;; parece un tema de shunting-yard
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0]) 
   
-  
+  ;; vamos a simplificar hasta que de un resultado
+  ;; funciona hasta que le pongo un * 2
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '* 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
+
   :rcf)
 
 (defn calcular-expresion [expr amb]
@@ -669,12 +683,15 @@
   (evaluar (list 'LET 'N '= '1) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
   (evaluar (list 'N '= '1) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
 
-  ;; Creo que no se puede probar por el GOTO
+  ;; tira undef statemenet pq no tengo definida la linea 20, pero deberia funcionar
   (evaluar (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  
   ;; OK
-  (calcular-expresion (list 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  (calcular-expresion (list 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 2, 'B 4}])
 
+  ;; FIXME: OVERFLOW
+  (evaluar (list 'LET 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
+  
+  
   :rcf)
 
 (defn evaluar [sentencia amb]
@@ -811,6 +828,7 @@
            (str operando1 operando2)
            (+ operando1 operando2))
        - (- operando1 operando2)
+       * (* operando1 operando2)
        < (if (< (+ 0 operando1) (+ 0 operando2)) -1 0)
        > (if (> (+ 0 operando1) (+ 0 operando2)) -1 0)
        >= (if (>= (+ 0 operando1) (+ 0 operando2)) -1 0)
@@ -1406,9 +1424,18 @@
   (ejecutar-asignacion '(X = X + 1) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}])
   (ejecutar-asignacion '(X$ = X$ + " MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}])
 
-  (ejecutar-asignacion '(L = LEN (N$)) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}])
-
   (ejecutar-asignacion (list 'L '= 'LEN (symbol "(") 'N$ (symbol ")")) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}]) 
+  
+  ;; OVERFLOW
+  (ejecutar-asignacion (list 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
+
+  ;; voy probando
+  ;; OK
+  (ejecutar-asignacion (list 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
+  ;; overflow cuando le agrego *
+  (ejecutar-asignacion (list 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
+  
+  
   
   :rcf)
 
