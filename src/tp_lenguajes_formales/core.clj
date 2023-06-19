@@ -166,19 +166,25 @@
   ;; OK pero falta definir linea 20 para que no rompa GOTO
   (evaluar-linea (list (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
   (expandir-nexts (list (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20)))
-  (anular-invalidos (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20)) 
+  (anular-invalidos (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20))
   (evaluar (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
 
   ;; OK
-  (evaluar-linea (list (list 'LET 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B )) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
+  (evaluar-linea (list (list 'LET 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B)) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
   (expandir-nexts (list (list 'LET 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B)))
-  (anular-invalidos (list 'LET 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B)) 
-  
+  (anular-invalidos (list 'LET 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B))
+
   ;; OK
   (evaluar-linea (list (list 'LET 'P '= '.)) [() [:ejecucion-inmediata 0] [] [] [] 0 {'P 4, 'B 2}])
-  
+
   ;; OK
-  (evaluar-linea (list (list 'IF 'P '= 1 'THEN 'PRINT 'X (symbol ";") " " (symbol ";"))) [() [:ejecucion-inmediata 0] [] [] [] 0 {'P 2}]) 
+  (evaluar-linea (list (list 'IF 'P '= 1 'THEN 'PRINT 'X (symbol ";") " " (symbol ";"))) [() [:ejecucion-inmediata 0] [] [] [] 0 {'P 2}])
+
+  ;; OK
+  (evaluar-linea (list (list 'L '= 'ASC (symbol "(") 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 1 (symbol ")") (symbol ")") '- 64)) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "tomato", 'I 1}])
+
+  ;; OK
+  (evaluar-linea (list (list 'IF 'L '< 1 'OR 'L '> 26 'THEN 'PRINT "??? " (symbol ";") (symbol ":") 'GOTO 190 )) [() [:ejecucion-inmediata 0] [] [] [] 0 {'L 4}])
   
 
   :rcf)
@@ -418,7 +424,7 @@
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'LEN (symbol "(") 'N$ (symbol ")")) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}]))) [10 1])
 
   ;; OK
-  (calcular-expresion (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}])
+  (calcular-expresion (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 2}])
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}]))) [10 1])
 
   ;; OK
@@ -428,6 +434,13 @@
   ;; OK
   (calcular-expresion (list 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
 
+  ;; OK
+  (calcular-expresion (list 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 1 (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "tomato", 'I 1}])
+  (calcular-expresion (list 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 3 (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "tomato", 'I 1}])
+
+  ;; OK
+  (calcular-expresion (list 'ASC (symbol "(") 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 1 (symbol ")") (symbol ")") '- 64) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "AMSTRONG", 'I 1}])
+  
   :rcf)
 
 (defn calcular-expresion [expr amb]
@@ -509,6 +522,8 @@
   (shunting-yard (list 'MID$ (symbol "(") "HOLA" (symbol ",") 1 (symbol ")")))
   (calcular-rpn (list "HOLA" 1 'MID$) [10 1])
 
+  (shunting-yard (desambiguar (preprocesar-expresion (list 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 1 (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "tomato", 'I 1}])))
+  
   :rcf)
 
 (defn shunting-yard [tokens]
@@ -541,7 +556,7 @@
 
   (aplicar 'LEN "HOLA" [10 1])
 
-  ;; al parecer el problema esta en shunting-yard que no pone el len al final
+  ;; OK
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'LEN (symbol "(") 'N$ (symbol ")")) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}]))) [10 1])
   ;; OK
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}]))) [10 1])
@@ -685,10 +700,13 @@
   ;; OK
   (calcular-expresion (list 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 2, 'B 4}])
 
-  ;; FIXME: OVERFLOW
+  ;; OK
   (evaluar (list 'LET 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
+
+  ;; OK
+  (evaluar (list 'L '= 'ASC (symbol "(") 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 1 (symbol ")") (symbol ")") '- 64) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "AMSTRONG", 'I 1}])
   
-  
+
   :rcf)
 
 (defn evaluar [sentencia amb]
@@ -802,6 +820,10 @@
 
   (if (and (not= 1 0) (not= 1 0)) -1 0)
   
+  (int (first (char-array "A")))
+
+  (aplicar 'ASC "ABC" [])
+
   :rcf)
 
 (defn aplicar
@@ -813,7 +835,8 @@
        LEN (count operando)
        STR$ (if (not (number? operando)) (dar-error 163 nro-linea) (eliminar-cero-entero operando)) ; Type mismatch error
        CHR$ (if (or (< operando 0) (> operando 255)) (dar-error 53 nro-linea) (str (char operando)))
-       INT (int operando)))) ; Illegal quantity error 
+       INT (int operando)
+       ASC (int (first (char-array operando)))))) ; Illegal quantity error  
   ([operador operando1 operando2 nro-linea]
    (if (or (nil? operando1) (nil? operando2))
      (dar-error 16 nro-linea)  ; Syntax error
@@ -938,11 +961,14 @@
   
   (anular-invalidos (list 'LET 'P '= '.))
   (anular-invalidos (list 'IF 'P '= 1 'THEN 'PRINT 'X (symbol ";") " " (symbol ";")))
+
+  (anular-invalidos (list 'IF 'L '< 1 'OR 'L '> 26 'THEN 'PRINT "??? " (symbol ";") (symbol ":") 'GOTO 190))
   :rcf)
 
 (defn anular-invalido [simbolo]
   (cond 
     (palabra-reservada? simbolo) simbolo
+    (string? simbolo) simbolo
     (empty? (re-seq #"\;|\=|\+|\-|\*|\/|\^|\<|\>|[A-Z]|[0-9]|^$|^\s+$|\(|\)|\,|\:|\." (str simbolo))) nil
     :else simbolo))
 
@@ -1425,16 +1451,11 @@
 
   (ejecutar-asignacion (list 'L '= 'LEN (symbol "(") 'N$ (symbol ")")) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}]) 
   
-  ;; OVERFLOW
-  (ejecutar-asignacion (list 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
-
-  ;; voy probando
   ;; OK
-  (ejecutar-asignacion (list 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
-  ;; overflow cuando le agrego *
   (ejecutar-asignacion (list 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
   
-  
+  ;; MID3$ funciona
+  (ejecutar-asignacion (list 'L '= 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 1 (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "tomato", 'I 1}])
   
   :rcf)
 
@@ -1584,6 +1605,8 @@
             -u 7
             LEN 7
             MID$ 7
+            MID3$ 7
+            ASC 7
             INT 7
             nil)))
 
