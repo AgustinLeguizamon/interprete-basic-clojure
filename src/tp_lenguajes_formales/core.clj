@@ -128,82 +128,6 @@
 ; mientras sea posible hacerlo
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(comment
-
-  (evaluar-linea (list '(IF N < 1 THEN GOTO 90)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  ;; OK
-  (expandir-nexts (list '(IF N < 1 THEN GOTO 90)))
-  ;; OK
-  (anular-invalidos '(IF N < 1 THEN GOTO 90))
-  ;; aca esta el null pointer
-  (evaluar '(IF N < 1 THEN GOTO 90) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-
-  (evaluar-linea (list (list 'INPUT "HOW MANY STARS DO YOU WANT" (symbol ";") 'N)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-
-  ;; OK
-  (evaluar-linea (list '(S = 3)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  (evaluar-linea (list '(S$ = "")) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-
-  ;; OK
-  (expandir-nexts (list '(S$ = "")))
-
-  (anular-invalidos '(S$ = ""))
-
-  ;; OK
-  (evaluar-linea (list (list 'L '= 'LEN (symbol "(") 'N$ (symbol ")"))) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA"}])
-  (expandir-nexts (list '(L = LEN (symbol "(") N$ (symbol ")"))))
-  (evaluar (list 'L '= 'LEN (symbol "(") 'N$ (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA"}])
-
-  ;; OK
-  (evaluar-linea (list (list 'PRINT 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")"))) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}])
-
-  ;; OK
-  (evaluar-linea (list (list 'LET 'N '= '1)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  (evaluar (list (list 'LET 'N '= '1)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-
-  ;; IMPORTANTE: la linea primero pasa por strings a tokens que hace cosas con simbolos como :
-  ;; para crear varias sentencias asi que CUIDADO al copy pastear las entradas en evaluar-linea
-
-  ;; OK pero falta definir linea 20 para que no rompa GOTO
-  (evaluar-linea (list (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  (expandir-nexts (list (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20)))
-  (anular-invalidos (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20))
-  (evaluar (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-
-  ;; OK
-  (evaluar-linea (list (list 'LET 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B)) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
-  (expandir-nexts (list (list 'LET 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B)))
-  (anular-invalidos (list 'LET 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B))
-
-  ;; OK
-  (evaluar-linea (list (list 'LET 'P '= '.)) [() [:ejecucion-inmediata 0] [] [] [] 0 {'P 4, 'B 2}])
-
-  ;; OK
-  (evaluar-linea (list (list 'IF 'P '= 1 'THEN 'PRINT 'X (symbol ";") " " (symbol ";"))) [() [:ejecucion-inmediata 0] [] [] [] 0 {'P 2}])
-
-  ;; OK
-  (evaluar-linea (list (list 'L '= 'ASC (symbol "(") 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 1 (symbol ")") (symbol ")") '- 64)) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "tomato", 'I 1}])
-
-  ;; OK
-  (evaluar-linea (list (list 'IF 'L '< 1 'OR 'L '> 26 'THEN 'PRINT "??? " (symbol ";") (symbol ":") 'GOTO 190)) [() [:ejecucion-inmediata 0] [] [] [] 0 {'L 4}])
-
-  ;; OK, pero recordar que evaluar-linea recibe las 3 expresiones por separado, sin el :
-  (evaluar-linea (list (list 'FOR 'J '= '1 'TO 'L (symbol ":") 'READ 'S$ (symbol ":") 'NEXT 'J)) [() [:ejecucion-inmediata 0] [] [] [] 0 {'L 4}])
-  (expandir-nexts (list (list 'FOR 'J '= '1 'TO 'L (symbol ":") 'READ 'S$ (symbol ":") 'NEXT 'J)))
-  (anular-invalidos (list 'FOR 'J '= '1 'TO 'L (symbol ":") 'READ 'S$ (symbol ":") 'NEXT 'J))
-
-  ;; OK
-  (evaluar-linea (list (list 'FOR 'A '= 0 'TO 8 '* 'ATN (symbol "(") 1 (symbol ")") 'STEP 0.1)) [() [:ejecucion-inmediata 0] [] [] [] 0 {'L 4}])
-  (expandir-nexts (list (list 'FOR 'A '= 0 'TO 8 '* 'ATN (symbol "(") 1 (symbol ")") 'STEP 0.1)))
-  (anular-invalidos (list 'FOR 'A '= 0 'TO 8 '* 'ATN (symbol "(") 1 (symbol ")") 'STEP 0.1))
-
-  (evaluar-linea (list (list 'PRINT 'INT (symbol "(") 'A '* '100 (symbol ")") '/ 100 (symbol ",") "   " (symbol ";") 'INT (symbol "(") 'SIN (symbol "(") 'A (symbol ")") '* 100000 (symbol ")") '/ 100000)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  (anular-invalidos (list 'PRINT 'INT (symbol "(") 'A '* '100 (symbol ")") '/ 100 (symbol ",") "   " (symbol ";") 'INT (symbol "(") 'SIN (symbol "(") 'A (symbol ")") '* 100000 (symbol ")") '/ 100000))
-
-  ;; fix
-  (evaluar-linea (list (list 'NEXT)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  
-  :rcf)
 
 (defn evaluar-linea
   ([sentencias amb]
@@ -294,10 +218,6 @@
 ; por evaluar-linea) y un ambiente actualizado incluyendo las
 ; variables cargadas con los valores leidos del teclado
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(comment
-  (leer-con-enter (list 'V$) [() [] [] [] [] 0 {}]) 
-
-  :rcf)
 
 (defn leer-con-enter
   ([param-de-input amb]
@@ -436,54 +356,6 @@
 ; user=> (calcular-expresion '(X + 5) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}])
 ; 7
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(comment
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(X$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '("HOLA") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '("HOLA" + "MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion '(X$ + " MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}]))) [10 1])
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'LEN (symbol "(") 'N$ (symbol ")")) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}]))) [10 1])
-
-  ;; OK
-  (calcular-expresion (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 2}])
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}]))) [10 1])
-
-  ;; OK
-  (calcular-expresion (list 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) ([() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}] 1))
-
-  ;; OK
-  (calcular-expresion (list 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
-
-  ;; OK
-  (calcular-expresion (list 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 1 (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "tomato", 'I 1}])
-  (calcular-expresion (list 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 3 (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "tomato", 'I 1}])
-
-  ;; OK
-  (calcular-expresion (list 'ASC (symbol "(") 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 1 (symbol ")") (symbol ")") '- 64) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "AMSTRONG", 'I 1}])
-
-  ;; OK
-  (calcular-expresion (list 'ATN (symbol "(") 1 (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  (calcular-expresion (list 8 '* 'ATN (symbol "(") 1 (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-
-  (calcular-expresion (list 'INT (symbol "(") 'A '* '100 (symbol ")") '/ 100 (symbol ",") "   " (symbol ";") 'INT (symbol "(") 'SIN (symbol "(") 'A (symbol ")") '* 100000 (symbol ")") '/ 100000) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-
-  ;; OK
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'INT (symbol "(") 'A '* '100 (symbol ")") '/ 100 ) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 1}]))) [:ejecucion-inmediata 0])
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'INT (symbol "(") 'SIN (symbol "(") 'A (symbol ")") '* 100000 (symbol ")") '/ 100000) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 1}]))) [:ejecucion-inmediata 0])
-
-  ;;OK MID$ (STR$ (B), 2, 1)
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'MID$ (symbol "(") 'STR$ (symbol "(") 'B (symbol ")") (symbol ",") 2 (symbol ",") 1(symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'B 12}]))) [:ejecucion-inmediata 0]) 
-  
-  ;; CHR$ (65 + B - 10)
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'CHR$ (symbol "(") 65 '+ 'B '- 10 (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'B 12}]))) [:ejecucion-inmediata 0])
-  
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'V$ '<> "") [() [:ejecucion-inmediata 0] [] [] [] 0 {'V$ "QUIT"}]))) [:ejecucion-inmediata 0])
-  
-  ;; S + INT (0.1 + EXP (P * LOG (2)))
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'S '+ 'INT (symbol "(") 0.1 '+ 'EXP (symbol "(") 'P '* 'LOG (symbol "(") 2 (symbol ")") (symbol ")") (symbol ")") ) [() [:ejecucion-inmediata 0] [] [] [] 0 {'S 4 'P 1}]))) [:ejecucion-inmediata 0])
-
-  :rcf)
 
 (defn calcular-expresion [expr amb]
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion expr amb))) (amb 1)))
@@ -509,11 +381,6 @@
 ; desambiguar-mid: recibe una expresion y la retorna con los
 ; MID$ ternarios reemplazados por MID3$ 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(comment
-  
-  (desambiguar-mid (list 'PRINT 'MID$ (symbol "(") 'N$, 'I (symbol ")")))
-
-  :rcf)
 
 (defn desambiguar-mid
   ([expr]
@@ -544,32 +411,6 @@
 ; user=> (shunting-yard '(1 + 2))
 ; (1 2 +)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(comment
-  (shunting-yard '("HOLA" + "MUNDO"))
-
-  (shunting-yard '(LEN "HOLA"))
-
-  (shunting-yard (desambiguar (preprocesar-expresion (list 'LEN (symbol "(") 'N$ (symbol ")")) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}])))
-
-  (count (desambiguar (preprocesar-expresion (list 'LEN (symbol "(") 'N$ (symbol ")")) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}])))
-
-  (shunting-yard (list 'LEN (symbol "(") "HOLA" (symbol ")")))
-  (shunting-yard (list 'LEN "HOLA"))
-
-  (shunting-yard (list (symbol "(") 1 '+ 2 (symbol ")") '* 3))
-
-  (count (shunting-yard (list 'LEN (symbol "(") "HOLA" (symbol ")"))))
-
-  (shunting-yard (desambiguar (preprocesar-expresion (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}])))
-  (shunting-yard (list 'MID$ (symbol "(") "HOLA" (symbol ",") 1 (symbol ")")))
-  (calcular-rpn (list "HOLA" 1 'MID$) [10 1])
-
-  (shunting-yard (desambiguar (preprocesar-expresion (list 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 1 (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "tomato", 'I 1}])))
-
-  ;; OK
-  (shunting-yard (desambiguar (preprocesar-expresion (list 'MID$ (symbol "(") 'STR$ (symbol "(") 'B (symbol ")") (symbol ",") 2 (symbol ",") 1 (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'B 12}]))) 
-
-  :rcf)
 
 (defn shunting-yard [tokens]
   (remove #(= % (symbol ","))
@@ -591,39 +432,7 @@
 ; y retorna el valor de la expresion o un mensaje de error en la
 ; linea indicada
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(comment
 
-  (calcular-rpn '("HOLA" " MUNDO" +) (['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}] 1))
-  (calcular-rpn '(3 4 +) [(['() [10 1] [] [] [] 0 '{}] 1)])
-  (calcular-rpn '(3 4 -) (['() [10 1] [] [] [] 0 '{}] 1))
-  (calcular-rpn '(2 1 <) [10 1])
-  (calcular-rpn '(1 2 <) [10 1])
-
-  (aplicar 'LEN "HOLA" [10 1])
-
-  ;; OK
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'LEN (symbol "(") 'N$ (symbol ")")) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}]))) [10 1])
-  ;; OK
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}]))) [10 1])
-
-  ;; OK
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
-  
-  ;; OK
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '<= '0 'OR 'B '<= '0) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
-
-  ;; OK
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'INT (symbol "(") 'A (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0]) 
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list (symbol "(") 'A (symbol ")") '<> 'A) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list (symbol "(") 2 (symbol ")") '<> 1) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0]) 
-  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'INT (symbol "(") 2 (symbol ")") '<> 4) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0])
-  (calcular-rpn (list '2 'INT '4 '<>) [:ejecucion-inmediata 0])
-
-
-
-  
-  :rcf)
 
 (defn calcular-rpn [tokens nro-linea]
   (try
@@ -659,17 +468,6 @@
 ; termina en punto y coma, imprime un salto de linea al terminar
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; PREGUNTA RESPONDIDA: ejemplo de una lista de expresiones
-;; expresión: todo lo que viene a la derecha de PRINT
-
-(comment
-
-  (imprimir '(X) [() [:ejecucion-inmediata 0] [] [] [] 0 {'X -05.50}])
-  (imprimir '("HOLA") [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  (imprimir '("HOLA" + "CHAU") [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  
-  
-  :rcf)
 
 (defn imprimir
   ([v]
@@ -724,67 +522,6 @@
 ; con un resultado (usado luego por evaluar-linea) y un ambiente
 ; actualizado
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(comment
-
-  (evaluar '(S$ = "") [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  (evaluar '(S = 3) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-
-  (evaluar (list 'L '= 'LEN (symbol "(") 'N$ (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOlA"}])
-
-  ;; OK
-  (evaluar (list 'PRINT 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}])
-  ;; OK
-  (imprimir (list 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'N$ "HOLA", 'L 3, 'I 1}])
-
-  ;; OK
-  (evaluar (list 'LET 'N '= '1) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  (evaluar (list 'N '= '1) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-
-  ;; tira undef statemenet pq no tengo definida la linea 20, pero deberia funcionar
-  (evaluar (list 'IF 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B 'THEN 'GOTO 20) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  ;; OK
-  (calcular-expresion (list 'A '<= '0 'OR 'B '<= '0 'OR 'INT (symbol "(") 'A (symbol ")") '<> 'A 'OR 'INT (symbol "(") 'B (symbol ")") '<> 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 2, 'B 4}])
-
-  ;; OK
-  (evaluar (list 'LET 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
-
-  ;; OK
-  (evaluar (list 'L '= 'ASC (symbol "(") 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 1 (symbol ")") (symbol ")") '- 64) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "AMSTRONG", 'I 1}])
-
-  ;; OJO: tengo que evaluar por separado pq el : no llega a evaluar linea
-  (evaluar (list 'FOR 'J '= '1 'TO 'L (symbol ":") 'READ 'S$ (symbol ":") 'NEXT 'J) [() [10 0] [] [] ["ALFA"] 0 {'L 1}])
-
-  ;; OK
-  (evaluar (list 'READ 'S$) [() [10 0] [] [] ["ALFA", "ROMEO"] 0 {'L 4}])
-  (evaluar (list 'READ 'S$) [() [10 0] [] [] ["ALFA", "ROMEO"] 1 {'L 4}])
-
-  ;; OK
-  (evaluar (list 'RESTORE) [() [10 0] [] [] ["ALFA", "ROMEO"] 1 {'L 1}])
-
-  ;; TODO: por el momento lo dejo asi, pero podria hacer que agarre el array y lo meto en data-mem
-  ;; ver si esto appendea o pisa lo anterior (seguro que appendea), ver si permite repetir, etc
-  (evaluar (list 'DATA 'ALFA 'ROMEO) [() [10 0] [] [] [] 0 {}])
-
-  ;; OK
-  (evaluar (list 'FOR 'A '= 0 'TO 8 '* 'ATN (symbol "(") 1 (symbol ")") 'STEP 0.1) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  ;; es en calcular expresion con valor-final (8 * ATN (1))
-
-  ;; OK, evaluo la parte del SIN que es lo que da el error
-  (evaluar (list 'PRINT 'INT (symbol "(") 'SIN (symbol "(") 'A (symbol ")") '* 100000 (symbol ")") '/ 100000) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 1}])
-
-  (evaluar (list 'GOSUB 200) [(list (list 'PRINT 10)) [:ejecucion-inmediata 0] [] [] [] 0 {'A 1}])
-
-  (evaluar (list 'END) [(list (list 'PRINT 10) (list 'PRINT 20)) [10 1] [] [] [] 0 {'A 1}])
-  
-  (list 'S '+ 'INT (symbol "(") 0.1 '+ 'EXP (symbol "(") 'P '* 'LOG (symbol "(") 2 (symbol ")") (symbol ")") (symbol ")"))
-  [() [:ejecucion-inmediata 0] [] [] [] 0 {'S 4 'P 1}]
-
-  ;; S = S + INT (0.1 + EXP (P * LOG (2)))
-  (evaluar (list 'S '= 'S '+ 'INT (symbol "(") 0.1 '+ 'EXP (symbol "(") 'P '* 'LOG (symbol "(") 2 (symbol ")") (symbol ")") (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'S 1 'P 0}])
-  
-  (+ 1 (int (+ (Math/exp (* (Math/log 2) 0)) 0.1)))
-
-  :rcf)
 
 (defn evaluar [sentencia amb]
   (if (or (contains? (set sentencia) nil) (and (palabra-reservada? (first sentencia)) (= (second sentencia) '=)))
@@ -893,27 +630,6 @@
 ; resultante (si ocurre un error, muestra un mensaje y retorna
 ; nil)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(comment
-  (aplicar '+ "HOLA" " MUNDO" [10 1])
-  (aplicar '< 2 1 [10 1])
-  (aplicar '< 0 1 [10 1])
-
-  (aplicar 'AND 0 0 [10 1])
-  
-  (true? -1)
-  (true? 0)
-
-  (if (and (not= 1 0) (not= 1 0)) -1 0)
-  
-  (int (first (char-array "A")))
-
-  (aplicar 'ASC "ABC" [])
-
-  (aplicar 'SIN 1 [])
-  
-  (not= "hola" "hola")
-
-  :rcf)
 
 (defn aplicar
   ([operador operando nro-linea]
@@ -977,18 +693,6 @@
 ; user=> (palabra-reservada? 'SPACE)
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(comment
-
-  (palabra-reservada? 'REM)
-  (palabra-reservada? 'EXIT)
-  (palabra-reservada? 'CLEAR)
-  (palabra-reservada? 'RUN)
-  (palabra-reservada? 'SPACE)
-  (palabra-reservada? 'RUn)
-  (palabra-reservada? 'PRINT)
-  (palabra-reservada? 'END)
-
-  :rcf)
 
 (defn palabra-reservada? [x]
   (not (empty? (re-seq #"EXIT|ENV|DATA|REM|NEW|CLEAR|LIST|RUN|LOAD|SAVE|LET|AND|OR|NOT|ABS|SGN|INT|SQR|SIN|COS|TAN|ATN|EXP|LOG|LEN|LEFT\$|MID\$|RIGHT\$|STR\$|VAL|CHR\$|ASC|GOTO|ON|IF|THEN|FOR|TO|STEP|NEXT|GOSUB|RETURN|END|INPUT|READ|RESTORE|PRINT" (str x)))))
@@ -1007,22 +711,6 @@
 ;; PREGUNTA: como hago regex de phi?
 ;; RESPUESTA: No tenemos phi y tampoco la potencia es decir la flechita para arriba
 
-(comment
-
-  (operador? '+)
-  (operador? '-)
-  (operador? '*)
-  (operador? '/)
-  (operador? (symbol "+"))
-  (operador? (symbol "++"))
-  (operador? (symbol "^"))
-  (operador? (symbol "%"))
-
-  (operador? '>=)
-  (operador? '>)
-  (operador? 'AND)
-
-  :rcf)
 
 (defn operador? [x]
   (not (nil? (re-matches #"\+|\-|\*|\/|\^|\<|\=|\>|\<\=|\>\=|\<\>|AND|OR|NOT" (str x)))))
@@ -1034,31 +722,7 @@
 ; (IF X nil * Y < 12 THEN LET nil X = 0)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; PREGUNTA RESPONDIDA: lista de simbolos equivale a expresión??
-;; numero, variable, string, palabra-reservada son simbolos validos lo que no entra, es invalido
-
 ;; TODO: ver de integrar las funcioens variable-string? float? integer?
-
-(comment
-
-  (re-seq #"\;|\=|\+|\-|\*|\/|\^" "a")
-
-  (anular-invalido '+)
-  (anular-invalido 'Y)
-  (anular-invalido '&)
-
-  (anular-invalidos '(IF X & * Y < 12 THEN LET ! X = 0))
-  (anular-invalidos '(X$ = ""))
-  (anular-invalidos '(X$ = "HOLA"))
-  (anular-invalidos '(L = LEN (symbol "(") N$ (symbol ")")))
-  (anular-invalidos (list 'PRINT 'MID$ (symbol "(") 'N$ (symbol ",") 'I (symbol ")")))
-  (anular-invalidos (list 'PRINT "ENTER A" (symbol ":") 'INPUT 'A (symbol ":") 'PRINT "ENTER B" (symbol ":") 'INPUT 'B))
-  
-  (anular-invalidos (list 'LET 'P '= '.))
-  (anular-invalidos (list 'IF 'P '= 1 'THEN 'PRINT 'X (symbol ";") " " (symbol ";")))
-
-  (anular-invalidos (list 'IF 'L '< 1 'OR 'L '> 26 'THEN 'PRINT "??? " (symbol ";") (symbol ":") 'GOTO 190))
-  :rcf)
 
 (defn anular-invalido [simbolo]
   (cond 
@@ -1084,7 +748,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-
 (defn iguales? [nro-nueva-linea linea-amb]
   (= (first linea-amb) nro-nueva-linea))
 
@@ -1105,32 +768,6 @@
 ; user=> (expandir-nexts n)
 ; ((PRINT 1) (NEXT A) (NEXT B))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(comment
-  (def n (list '(PRINT 1) (list 'NEXT 'A (symbol ",") 'B)))
-
-  (def sentencia (list 'NEXT 'A (symbol ",") 'B))
-
-  sentencia
-
-  (expandir-nexts (list '(PRINT 1) (list 'NEXT 'A (symbol ",") 'B)))
-  (expandir-nexts (list '(PRINT X + 10) (list 'NEXT 'A (symbol ",") 'B) (list 'NEXT 'C (symbol ",") 'D)))
-  (expandir-nexts (list '(PRINT X + 10) (list 'NEXT 'A)))
-  
-  (expandir-nexts (list '(LET S = S + 10)))
-
-  (expandir-nexts (list (list 'IF 'N '< 1 'THEN 'GOTO 90)))
-
-  ;; borra el next si esta solo
-  (expandir-nexts (list (list 'NEXT)))
-  
-  
-  :rcf)
-
-(defn in?
-  "true if coll contains elm"
-  [coll elm]
-  (some #(= elm %) coll))
 
 (defn crear-lista-con-next [x]
   (list 'NEXT x))
@@ -1166,14 +803,6 @@
 ; ?ERROR DISK FULL IN 100nil
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(comment
-
-  (dar-error 16 [:ejecucion-inmediata 4])
-  (dar-error "?ERROR DISK FULL" [:ejecucion-inmediata 4])
-  (dar-error 16 [100 3])
-  (dar-error "?ERROR DISK FULL" [100 3])
-
-  :rcf)
 
 (defn dar-error-aux [prog-ptrs]
   (if (number? (first prog-ptrs)) (str " IN " (first prog-ptrs)) nil)
@@ -1197,24 +826,6 @@
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(comment
-
-  (re-matches #".*[A-Z0-9]$" (str 'X))
-  (re-matches #".*[A-Z0-9]$" (str 'X1))
-  (not (nil? (re-matches #".*[A-Z0-9]$" (str '1))))
-  (re-matches #".*[A-Z0-9]$" (str 'X%))
-  (re-matches #".*[A-Z0-9]$" (str 'X$))
-
-  (variable-float? 'X)
-  (variable-float? 'X1)
-  (variable-float? 1)
-  (variable-float? 'X%)
-  (variable-float? 'X$)
-  
-  (variable-float? "HOLA")
-
-  :rcf)
-
 (defn empieza-con-letra? [x]
   (re-matches #"^[A-Z].*" (str x)))
 
@@ -1234,39 +845,6 @@
 ; user=> (variable-integer? 'X$)
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(comment
-
-  (palabra-reservada? 'X%)
-  (palabra-reservada? 'X)
-  (palabra-reservada? 'X$)
-
-  (first "hola")
-  (if (re-matches #"^[A-Z].*" (str 'X%)) "si" "no")
-  (re-matches #"^[A-Z].*" (str (symbol "1%")))
-
-  (re-matches #".*%$" (str 'X%))
-  (re-matches #".*%$" (str 'X$))
-  (re-matches #".*%$" (str 'X))
-
-
-  (and (not (nil? (empieza-con-letra? 'X%))) (not (nil? (re-matches #".*%$" (str 'X%)))))
-
-  (not (nil? (empieza-con-letra? 1)))
-  (not (nil? (re-matches #".*%$" (str 1))))
-
-  (variable-integer? 'X%)
-  (variable-integer? 'X)
-  (variable-integer? '$)
-  (variable-integer? 'REM)
-  (variable-integer? 1)
-  (variable-integer? '<)
-
-  (nil? true)
-  (nil? false)
-
-  :rcf)
-
-
 
 (defn variable-integer? [x]
   (cond
@@ -1284,14 +862,6 @@
 ; user=> (variable-string? 'X%)
 ; false
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(comment
-  (variable-string? 'X%)
-  (variable-string? 'X)
-  (variable-string? 'X$)
-  (variable-string? 'REM)
-  (variable-string? 1)
-
-  :rcf)
 
 (defn variable-string? [x]
   (cond
@@ -1310,20 +880,6 @@
 ; user=> (contar-sentencias 20 [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [10 1] [] [] [] 0 {}])
 ; 2
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(comment
-
-
-  (def amb [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [10 1] [] [] [] 0 {}])
-
-
-
-  (count (expandir-nexts (next (first (filter (partial iguales? 20) (nth amb 0))))))
-
-  (contar-sentencias 10 amb)
-  (contar-sentencias 15 amb)
-  (contar-sentencias 20 amb)
-
-  :rcf)
 
 (defn contar-sentencias [nro-linea amb]
   (count (expandir-nexts (next (first (filter (partial iguales? nro-linea) (nth amb 0)))))))
@@ -1361,47 +917,6 @@
 ; nil
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(comment
-
-  (def _amb [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [10 2] [] [] [] 0 {}])
-
-  ; obtener sentencia a partir de linea
-  (def _lineas (list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))))
-
-  (remover-lineas-hasta 10  _lineas)
-  (remover-lineas-hasta 15  _lineas)
-  (remover-lineas-hasta 20  _lineas)
-  (remover-lineas-hasta 25  _lineas)
-
-  (obtener-nro-linea [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  (obtener-cant-sentencias-restantes [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-
-  (buscar-lineas-restantes [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-
-  (expandir-nexts (rest (nth _lineas 2)))
-
-  (obtener-lineas-amb _amb)
-  (obtener-nro-linea _amb)
-  (obtener-cant-sentencias-restantes _amb)
-
-  (buscar-lineas-restantes [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
-  (buscar-lineas-restantes ['((PRINT X) (PRINT Y)) [:ejecucion-inmediata 2] [] [] [] 0 {}])
-  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [10 2] [] [] [] 0 {}])
-  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [10 1] [] [] [] 0 {}])
-  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [10 0] [] [] [] 0 {}])
-
-  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [15 1] [] [] [] 0 {}])
-  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [15 0] [] [] [] 0 {}])
-  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [] [] [] 0 {}])
-  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 2] [] [] [] 0 {}])
-
-  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 1] [] [] [] 0 {}])
-
-  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 0] [] [] [] 0 {}])
-  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 -1] [] [] [] 0 {}])
-  (buscar-lineas-restantes [(list '(10 (PRINT X) (PRINT Y)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [25 0] [] [] [] 0 {}])
-
-  :rcf)
 
 (defn obtener-nro-linea [amb]
   (first (nth amb 1)))
@@ -1442,23 +957,6 @@
 ; user=> (continuar-linea [(list '(10 (PRINT X)) '(15 (GOSUB 100) (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [[15 2]] [] [] 0 {}])
 ; [:omitir-restante [((10 (PRINT X)) (15 (GOSUB 100) (X = X + 1)) (20 (NEXT I , J))) [15 1] [] [] [] 0 {}]]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(comment
-
-  (continuar-linea [(list '(10 (PRINT X)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [] [] [] 0 {}])
-
-  (continuar-linea [(list '(10 (PRINT X)) '(15 (GOSUB 100) (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [[15 2]] [] [] 0 {}])
-
-  (def amb [(list '(10 (PRINT X)) '(15 (GOSUB 100) (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [[15 2]] [] [] 0 {}])
-  
-  ;; [(prog-mem)  [prog-ptrs]  [gosub-return-stack]  [for-next-stack]  [data-mem]  data-ptr  {var-mem}]
-  
-  (assoc amb (indice-amb :prog-ptrs) (get-amb-gosub-return-stack amb))
-
-  (get-amb-gosub-return-stack [(list '(10 (PRINT X)) '(15 (X = X + 1)) (list 20 (list 'NEXT 'I (symbol ",") 'J))) [20 3] [] [] [] 0 {}])
-
-  :rcf)
-
 
 (defn get-amb-gosub-return-stack
   "devuelve un prog-ptrs"
@@ -1530,31 +1028,6 @@
 ; [((10 (PRINT X))) [10 1] [] [] [] 0 {X$ "HOLA MUNDO"}]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(comment
-
-  (first '(X = X + 1))
-  (drop 2 '(X = X + 1))
-  (drop 2 '(X$ = X$ + " MUNDO"))
-
-  (ejecutar-asignacion '(X = 5) ['((10 (PRINT X))) [10 1] [] [] [] 0 {}])
-  (ejecutar-asignacion '(X = 5) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}])
-  (ejecutar-asignacion '(X = X + 1) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 2}])
-  (ejecutar-asignacion '(X$ = X$ + " MUNDO") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}])
-
-  (ejecutar-asignacion (list 'L '= 'LEN (symbol "(") 'N$ (symbol ")")) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}]) 
-  
-  ;; OK
-  (ejecutar-asignacion (list 'C '= 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}])
-  
-  ;; MID3$ funciona
-  (ejecutar-asignacion (list 'L '= 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 1 (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "tomato", 'I 1}])
-  
-  :rcf)
-
-
-
-
-(indice-amb :hash-map)
 
 (defn ejecutar-asignacion [sentencia amb]
   (let [variable (first sentencia)
@@ -1572,23 +1045,6 @@
 ; user=> (preprocesar-expresion '(X + . / Y% * Z) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 5 Y% 2}])
 ; (5 + 0 / 2 * 0)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(comment
-
-  (preprocesar-expresion '(X$ + " MUNDO" + Z$) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}])
-  (preprocesar-expresion '(X + . / Y% * Z) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X 5 Y% 2}]) 
-  (preprocesar-expresion '("HOLA") ['((10 (PRINT X))) [10 1] [] [] [] 0 '{X$ "HOLA"}])
-  
-  (variable-string? "HOLA")
-  (variable-integer? "HOLA")
-  (variable-float? "HOLA")
-
-  (preprocesar-expresion '(LEN (N$)) ['((10 (PRINT X))) [10 1] [] [] [] 0 '{N$ "HOLA"}])
-  
-  (first (second '(LEN (N$))))
-  
-  :rcf)
-
 
 
 (defn obtener-variable-amb [valor-variable simbolo]
@@ -1624,25 +1080,6 @@
 ; user=> (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") '- 2 '+ 'K (symbol ",") 3 (symbol ")")))
 ; (MID3$ ( 1 , -u 2 + K , 3 ))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(comment
-
-
-  (list '- 2 '* (symbol "(") '- 3 '+ 5 '- (symbol "(") '+ 2 '/ 7 (symbol ")") (symbol ")"))
-  ;; ( - 2 * (- 3 + 5 - ( + 2 / 7)) )
-  ;; (-u 2 * (-u 3 + 5 - (2 / 7)))
-
-  (count (list '- 2 '* (symbol "(") '- 3 '+ 5 '- (symbol "(") '+ 2 '/ 7 (symbol ")") (symbol ")")))
-  (desambiguar-mas-menos (list '- 2 '* (symbol "(") '- 3 '+ 5 '- (symbol "(") '+ 2 '/ 7 (symbol ")") (symbol ")")))
-
-  (desambiguar (list '- 2 '* (symbol "(") '- 3 '+ 5 '- (symbol "(") '+ 2 '/ 7 (symbol ")") (symbol ")")))
-  (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") 2 (symbol ")")))
-  (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") 2 (symbol ",") 3 (symbol ")")))
-  (desambiguar (list 'MID$ (symbol "(") 1 (symbol ",") '- 2 '+ 'K (symbol ",") 3 (symbol ")")))
-  (desambiguar (list "HOLA" '+ "MUNDO"))
-
-  (= 'x (symbol "x"))
-
-  :rcf)
 
 (defn desambiguar [expr]
   (desambiguar-mid (desambiguar-mas-menos expr)))
@@ -1662,21 +1099,6 @@
 ; 8
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; PREGUNTA: pq MID tiene 8, es un por defecto?? todo lo que no sea un operador tiene 8??
-;; RESPUESTA: Si
-
-(comment
-  (precedencia 'OR)
-  (precedencia 'AND)
-  (precedencia '*)
-  (precedencia '-u)
-  (precedencia 'MID$)
-  ;; TODO: quitar los  ^ pq no se usan en este tp
-  (precedencia (symbol "^"))
-
-  :rcf)
-
-;; TODO: a LEN le puse una precedencia de 7 para que este antes de los strings que tienen 8
 (defn precedencia [token]
   (cond
     (= token (symbol ",")) 0
@@ -1722,35 +1144,6 @@
 ; user=> (aridad 'MID3$)
 ; 3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(comment
-  (aridad 'INPUT)
-
-  (apply str (drop-last (str 'INPUT)))
-
-  (aridad 'ATN)
-  (aridad '+)
-  (aridad '/)
-  (aridad 'AND)
-  (aridad '<)
-  (aridad '<=)
-  (aridad (symbol "STR$"))
-  (aridad (symbol "MID$"))
-  (aridad (symbol "MID3$"))
-  (aridad 'THEN)
-  (aridad 'LET/=)
-
-  (apply str (drop-last (str 'ATN)))
-
-  (re-matches #".*[^0-9]\$$" (str (symbol "MID$")))
-  (re-matches #"MID[0-9]\$$" (str (symbol "MID$")))
-  (re-matches #"MID[0-9]\$$" (str (symbol "MID3$")))
-  (re-matches #".*[0-9]\$$" (str (symbol "MID3$")))
-
-
-  :rcf)
-
-;; PREGUNTA RESPONDIDA: como se la aridad? que es MID3$?
-;; ¿que implica un token?
 
 ;; todo lo que no sea un operador o funcion tiene aridad 0, es decir las sentencias
 ;; aridad -> token es lo que te da la funcion de strings-a-tokens
@@ -1796,34 +1189,6 @@
 ; A
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(comment
-
-  (eliminar-cero-decimal-aux 1.50)
-  (eliminar-cero-decimal-aux 1.550)
-
-  (println 1.50)
-
-  ;; cuando no tiene decimales significativos lo tengo que castear a entero
-
-
-  (and (float? 1.0) (str/ends-with? (str 1.0) ".0"))
-
-  (str/ends-with? (str 1.0000) ".0")
-
-  (eliminar-cero-decimal 1.5)
-  (eliminar-cero-decimal 1.50)
-  (eliminar-cero-decimal 1.504)
-  (eliminar-cero-decimal 1.5040)
-  (eliminar-cero-decimal 1.0)
-  (eliminar-cero-decimal 10.0000)
-  (eliminar-cero-decimal 'A)
-  (eliminar-cero-decimal "HOLA")
-  
-  ;; NO deberia recibir un booleano nunca
-  (eliminar-cero-decimal false)
-
-  :rcf)
-
 (defn eliminar-cero-decimal-aux [n]
   (cond
     (and (float? n) (str/ends-with? (str n) ".0")) (int n)
@@ -1859,36 +1224,6 @@
 ; user=> (eliminar-cero-entero -0.5)
 ; "-.5"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(comment
-
-  (str 'A)
-  (str 0)
-
-  (symbol? 'A)
-  (symbol? 0)
-  (number? 0)
-  (number? -1)
-  (number? -1.5)
-  (str " " -1.5)
-
-
-
-  (eliminar-cero-entero-aux -0.5)
-  (eliminar-cero-entero-aux 0.5)
-  (eliminar-cero-entero-aux 0)
-
-
-  (eliminar-cero-entero "HOLA")
-  (eliminar-cero-entero 'A)
-  (eliminar-cero-entero 0)
-  (eliminar-cero-entero 1.5)
-  (eliminar-cero-entero 1)
-  (eliminar-cero-entero -1)
-  (eliminar-cero-entero -1.5)
-  (eliminar-cero-entero 0.5)
-  (eliminar-cero-entero -0.5)
-
-  :rcf)
 
 (defn eliminar-cero-entero-aux [n]
   (cond
