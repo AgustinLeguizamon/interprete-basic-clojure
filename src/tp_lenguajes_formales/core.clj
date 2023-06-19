@@ -192,7 +192,7 @@
   (expandir-nexts (list (list 'FOR 'J '= '1 'TO 'L (symbol ":") 'READ 'S$ (symbol ":") 'NEXT 'J)))
   (anular-invalidos (list 'FOR 'J '= '1 'TO 'L (symbol ":") 'READ 'S$ (symbol ":") 'NEXT 'J))
 
-  ;; OVERFLOW ERROR
+  ;; OK
   (evaluar-linea (list (list 'FOR 'A '= 0 'TO 8 '* 'ATN (symbol "(") 1 (symbol ")") 'STEP 0.1)) [() [:ejecucion-inmediata 0] [] [] [] 0 {'L 4}])
   (expandir-nexts (list (list 'FOR 'A '= 0 'TO 8 '* 'ATN (symbol "(") 1 (symbol ")") 'STEP 0.1)))
   (anular-invalidos (list 'FOR 'A '= 0 'TO 8 '* 'ATN (symbol "(") 1 (symbol ")") 'STEP 0.1))
@@ -200,6 +200,9 @@
   (evaluar-linea (list (list 'PRINT 'INT (symbol "(") 'A '* '100 (symbol ")") '/ 100 (symbol ",") "   " (symbol ";") 'INT (symbol "(") 'SIN (symbol "(") 'A (symbol ")") '* 100000 (symbol ")") '/ 100000)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
   (anular-invalidos (list 'PRINT 'INT (symbol "(") 'A '* '100 (symbol ")") '/ 100 (symbol ",") "   " (symbol ";") 'INT (symbol "(") 'SIN (symbol "(") 'A (symbol ")") '* 100000 (symbol ")") '/ 100000))
 
+  ;; fix
+  (evaluar-linea (list (list 'NEXT)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  
   :rcf)
 
 (defn evaluar-linea
@@ -477,6 +480,9 @@
   
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'V$ '<> "") [() [:ejecucion-inmediata 0] [] [] [] 0 {'V$ "QUIT"}]))) [:ejecucion-inmediata 0])
   
+  ;; S + INT (0.1 + EXP (P * LOG (2)))
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'S '+ 'INT (symbol "(") 0.1 '+ 'EXP (symbol "(") 'P '* 'LOG (symbol "(") 2 (symbol ")") (symbol ")") (symbol ")") ) [() [:ejecucion-inmediata 0] [] [] [] 0 {'S 4 'P 1}]))) [:ejecucion-inmediata 0])
+
   :rcf)
 
 (defn calcular-expresion [expr amb]
@@ -770,6 +776,14 @@
 
   (evaluar (list 'END) [(list (list 'PRINT 10) (list 'PRINT 20)) [10 1] [] [] [] 0 {'A 1}])
   
+  (list 'S '+ 'INT (symbol "(") 0.1 '+ 'EXP (symbol "(") 'P '* 'LOG (symbol "(") 2 (symbol ")") (symbol ")") (symbol ")"))
+  [() [:ejecucion-inmediata 0] [] [] [] 0 {'S 4 'P 1}]
+
+  ;; S = S + INT (0.1 + EXP (P * LOG (2)))
+  (evaluar (list 'S '= 'S '+ 'INT (symbol "(") 0.1 '+ 'EXP (symbol "(") 'P '* 'LOG (symbol "(") 2 (symbol ")") (symbol ")") (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'S 1 'P 0}])
+  
+  (+ 1 (int (+ (Math/exp (* (Math/log 2) 0)) 0.1)))
+
   :rcf)
 
 (defn evaluar [sentencia amb]
@@ -913,6 +927,8 @@
        INT (int operando)
        ATN (Math/atan operando)
        SIN (Math/sin operando)
+       EXP (Math/exp operando)
+       LOG (Math/log operando)
        ASC (int (first (char-array operando)))))) ; Illegal quantity error  
   ([operador operando1 operando2 nro-linea]
    (if (or (nil? operando1) (nil? operando2))
@@ -1097,22 +1113,18 @@
 
   sentencia
 
-
-
-
-
   (expandir-nexts (list '(PRINT 1) (list 'NEXT 'A (symbol ",") 'B)))
   (expandir-nexts (list '(PRINT X + 10) (list 'NEXT 'A (symbol ",") 'B) (list 'NEXT 'C (symbol ",") 'D)))
   (expandir-nexts (list '(PRINT X + 10) (list 'NEXT 'A)))
-
-  (expandir-nexts '(PRINT))
   
+  (expandir-nexts (list '(LET S = S + 10)))
+
   (expandir-nexts (list (list 'IF 'N '< 1 'THEN 'GOTO 90)))
 
-  (expandir-nexts '(L = LEN N$))
-  (expandir-nexts '(L = LEN (symbol "(") N$ (symbol ")")))
+  ;; borra el next si esta solo
+  (expandir-nexts (list (list 'NEXT)))
   
-
+  
   :rcf)
 
 (defn in?
@@ -1132,6 +1144,7 @@
 (defn expandir-nexts [n]
   (cond
     (empty? n) n
+    (and (= 'NEXT (first (first n))) (= (count (first n)) 1)) n
     (= 'NEXT (first (first n))) (concat (expandir-sentencia-con-next (rest (first n))) (expandir-nexts (rest n)))
     :else (concat (list (first n)) (expandir-nexts (rest n)))))
 
@@ -1687,6 +1700,8 @@
             LEN 8 
             MID$ 8
             MID3$ 8
+            EXP 8
+            LOG 8
             ASC 8
             INT 8
             ATN 8

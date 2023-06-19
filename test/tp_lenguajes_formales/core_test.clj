@@ -22,9 +22,10 @@
 (deftest expandir-nexts-test
   (testing "Prueba de la funcion: expandir-nexts"
     (is (= (expandir-nexts (list '(PRINT 1) (list 'NEXT 'A (symbol ",") 'B))) '((PRINT 1) (NEXT A) (NEXT B))))
-    (is (= (expandir-nexts (list '(PRINT X + 10) (list 'NEXT 'A (symbol ",") 'B) (list 'NEXT 'C (symbol ",") 'D))) '((PRINT X + 10) (NEXT A) (NEXT B) (NEXT C) (NEXT D))) )
-    (is (= (expandir-nexts (list '(PRINT X + 10) (list 'NEXT 'A))) '((PRINT X + 10) (NEXT A))) ) 
-  ))
+    (is (= (expandir-nexts (list '(PRINT X + 10) (list 'NEXT 'A (symbol ",") 'B) (list 'NEXT 'C (symbol ",") 'D))) '((PRINT X + 10) (NEXT A) (NEXT B) (NEXT C) (NEXT D))))
+    (is (= (expandir-nexts (list '(PRINT X + 10) (list 'NEXT 'A))) '((PRINT X + 10) (NEXT A))))
+    (is (= (expandir-nexts (list (list 'NEXT))) (list (list 'NEXT))))
+    ))
 
 (deftest extraer-data-test
   (testing "Prueba de la funcion: extraer-data"
