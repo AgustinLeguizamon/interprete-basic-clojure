@@ -150,7 +150,7 @@
     (is (= (precedencia 'AND) 2))
     (is (= (precedencia '*) 6))
     (is (= (precedencia '-u) 7))
-    (is (= (precedencia 'MID$) 7))))
+    (is (= (precedencia 'MID$) 8))))
 
 (deftest eliminar-cero-decimal-test
   (testing "Prueba de la funcion: eliminar-cero-decimal"

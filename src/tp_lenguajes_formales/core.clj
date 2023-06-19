@@ -462,6 +462,12 @@
   ;; OK
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'INT (symbol "(") 'A '* '100 (symbol ")") '/ 100 ) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 1}]))) [:ejecucion-inmediata 0])
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'INT (symbol "(") 'SIN (symbol "(") 'A (symbol ")") '* 100000 (symbol ")") '/ 100000) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 1}]))) [:ejecucion-inmediata 0])
+
+  ;;OK MID$ (STR$ (B), 2, 1)
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'MID$ (symbol "(") 'STR$ (symbol "(") 'B (symbol ")") (symbol ",") 2 (symbol ",") 1(symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'B 12}]))) [:ejecucion-inmediata 0]) 
+  
+  ;; CHR$ (65 + B - 10)
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'CHR$ (symbol "(") 65 '+ 'B '- 10 (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'B 12}]))) [:ejecucion-inmediata 0])
   
   :rcf)
 
@@ -545,7 +551,10 @@
   (calcular-rpn (list "HOLA" 1 'MID$) [10 1])
 
   (shunting-yard (desambiguar (preprocesar-expresion (list 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 1 (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "tomato", 'I 1}])))
-  
+
+  ;; OK
+  (shunting-yard (desambiguar (preprocesar-expresion (list 'MID$ (symbol "(") 'STR$ (symbol "(") 'B (symbol ")") (symbol ",") 2 (symbol ",") 1 (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'B 12}]))) 
+
   :rcf)
 
 (defn shunting-yard [tokens]
@@ -1658,15 +1667,17 @@
             + 5
             - 5
             * 6
-            / 6
+            / 6 
             -u 7
-            LEN 7
-            MID$ 7
-            MID3$ 7
-            ASC 7
-            INT 7
-            ATN 7
-            SIN 7
+            STR$ 8
+            CHR$ 8
+            LEN 8 
+            MID$ 8
+            MID3$ 8
+            ASC 8
+            INT 8
+            ATN 8
+            SIN 8
             nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
