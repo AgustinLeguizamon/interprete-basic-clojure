@@ -48,7 +48,7 @@
 (declare eliminar-cero-entero)            ; IMPLEMENTAR
 
 
-(def indice-amb {:prog-mem 0, :prog-ptrs 1, :gosub-return-stack 2, :hash-map 6})
+(def indice-amb {:prog-mem 0, :prog-ptrs 1, :gosub-return-stack 2, :data-ptr 5 :hash-map 6})
 
 (defn spy
   ([x] (do (prn x) x))
@@ -184,9 +184,16 @@
   (evaluar-linea (list (list 'L '= 'ASC (symbol "(") 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 1 (symbol ")") (symbol ")") '- 64)) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "tomato", 'I 1}])
 
   ;; OK
-  (evaluar-linea (list (list 'IF 'L '< 1 'OR 'L '> 26 'THEN 'PRINT "??? " (symbol ";") (symbol ":") 'GOTO 190 )) [() [:ejecucion-inmediata 0] [] [] [] 0 {'L 4}])
-  
+  (evaluar-linea (list (list 'IF 'L '< 1 'OR 'L '> 26 'THEN 'PRINT "??? " (symbol ";") (symbol ":") 'GOTO 190)) [() [:ejecucion-inmediata 0] [] [] [] 0 {'L 4}])
 
+  ;; SYNTAX ERROR
+  (evaluar-linea (list (list 'FOR 'J '= '1 'TO 'L (symbol ":") 'READ 'S$ (symbol ":") 'NEXT 'J)) [() [:ejecucion-inmediata 0] [] [] [] 0 {'L 4}])
+  (expandir-nexts (list (list 'FOR 'J '= '1 'TO 'L (symbol ":") 'READ 'S$ (symbol ":") 'NEXT 'J)))
+  (anular-invalidos (list 'FOR 'J '= '1 'TO 'L (symbol ":") 'READ 'S$ (symbol ":") 'NEXT 'J))
+  ;; no tiene READ asi que vemos de implementarlo
+  ;; tampoco tiene DATA pero al parecer no es un problema si cargas un programa 
+  
+  
   :rcf)
 
 (defn evaluar-linea
@@ -705,8 +712,20 @@
 
   ;; OK
   (evaluar (list 'L '= 'ASC (symbol "(") 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 1 (symbol ")") (symbol ")") '- 64) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "AMSTRONG", 'I 1}])
-  
 
+  ;; OJO: tengo que evaluar por separado pq el : no llega a evaluar linea
+  (evaluar (list 'FOR 'J '= '1 'TO 'L (symbol ":") 'READ 'S$ (symbol ":") 'NEXT 'J) [() [10 0] [] [] ["ALFA"] 0 {'L 1}])
+
+  ;; OK
+  (evaluar (list 'READ 'S$) [() [10 0] [] [] ["ALFA", "ROMEO"] 0 {'L 4}])
+  (evaluar (list 'READ 'S$) [() [10 0] [] [] ["ALFA", "ROMEO"] 1 {'L 4}])
+  
+  ;; OK
+  (evaluar (list 'RESTORE) [() [10 0] [] [] ["ALFA", "ROMEO"] 1 {'L 1}])
+
+  ;; TODO: por el momento lo dejo asi, pero podria hacer que agarre el array y lo meto en data-mem
+  ;; ver si esto appendea o pisa lo anterior (seguro que appendea), ver si permite repetir, etc
+  (evaluar (list 'DATA 'ALFA 'ROMEO) [() [10 0] [] [] [] 0 {}])
   :rcf)
 
 (defn evaluar [sentencia amb]
@@ -794,6 +813,15 @@
                (if (nil? resu)
                  [nil amb]
                  [:sin-errores resu]))
+             (do (dar-error 16 (amb 1)) [nil amb]))
+      READ (if (>= (count (next sentencia)) 1)
+             (leer-data (next sentencia) amb)
+             (do (dar-error 16 (amb 1)) [nil amb]))
+      RESTORE (if (= (count (next sentencia)) 0)
+                [:sin-errores (assoc amb (indice-amb :data-ptr) 0)]
+                (do (dar-error 16 (amb 1)) [nil amb]))
+      DATA (if (>= (count (next sentencia)) 1) ;; TODO: lo pongo para que no rompa al leer DATA al final del programa, ver si se puede dejar asi
+             [:sin-errores amb]
              (do (dar-error 16 (amb 1)) [nil amb]))
       (if (= (second sentencia) '=)
         (let [resu (ejecutar-asignacion sentencia amb)]

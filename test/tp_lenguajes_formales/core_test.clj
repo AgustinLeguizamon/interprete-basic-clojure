@@ -222,3 +222,11 @@
     (is (= (calcular-expresion (list 'ASC (symbol "(") 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 1 (symbol ")") (symbol ")") '- 64) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "AMSTRONG", 'I 1}]) 1))
     )) 
 
+(deftest evaluar-test
+  (testing "Context of the test assertions"
+    (is (= (evaluar (list 'READ 'S$) [() [10 0] [] [] ["ALFA", "ROMEO"] 0 {}]) [:sin-errores [() [10 0] [] [] ["ALFA", "ROMEO"] 1 {'S$ "ALFA"}]]))
+    (is (= (evaluar (list 'READ 'S$) [() [10 0] [] [] ["ALFA", "ROMEO"] 1 {}]) [:sin-errores [() [10 0] [] [] ["ALFA", "ROMEO"] 2 {'S$ "ROMEO"}]]))
+    (is (= (evaluar (list 'RESTORE) [() [10 0] [] [] ["ALFA", "ROMEO"] 1 {}]) [:sin-errores [() [10 0] [] [] ["ALFA", "ROMEO"] 0 {}]]) "Deberia resetear data-ptr a 0")
+    (is (= (evaluar (list 'DATA 'ALFA 'ROMEO) [() [10 0] [] [] [] 0 {}]) [:sin-errores [() [10 0] [] [] [] 0 {}]]) "Deberia no hacer nada")
+    
+    )) 
