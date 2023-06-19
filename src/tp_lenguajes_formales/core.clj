@@ -48,6 +48,7 @@
 (declare eliminar-cero-entero)            ; IMPLEMENTAR
 
 
+; [(prog-mem)  [prog-ptrs]  [gosub-return-stack]  [for-next-stack]  [data-mem]  data-ptr  {var-mem}]
 (def indice-amb {:prog-mem 0, :prog-ptrs 1, :gosub-return-stack 2, :data-ptr 5 :hash-map 6})
 
 (defn spy
@@ -756,8 +757,11 @@
   ;; es en calcular expresion con valor-final (8 * ATN (1))
 
   ;; OK, evaluo la parte del SIN que es lo que da el error
-  (evaluar (list 'PRINT 'INT (symbol "(") 'SIN (symbol "(") 'A (symbol ")") '* 100000 (symbol ")") '/ 100000) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 1}]) 
-  
+  (evaluar (list 'PRINT 'INT (symbol "(") 'SIN (symbol "(") 'A (symbol ")") '* 100000 (symbol ")") '/ 100000) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 1}])
+
+  (evaluar (list 'GOSUB 200) [(list (list 'PRINT 10)) [:ejecucion-inmediata 0] [] [] [] 0 {'A 1}])
+
+  (evaluar (list 'END) [(list (list 'PRINT 10) (list 'PRINT 20)) [10 1] [] [] [] 0 {'A 1}])
 
 
   :rcf)
@@ -840,8 +844,10 @@
              (retornar-al-for amb (fnext sentencia))
              (do (dar-error 16 (amb 1)) [nil amb]))  ; Syntax error
       END (if (<= (count (next sentencia)) 0)
-             [:sin-errores amb]
-             (do (dar-error 16 (amb 1)) [nil amb]))
+            [nil amb]
+            ;; [:omitir-restante (assoc amb 1 [(first (last (nth amb (indice-amb :prog-mem)))) 0])]
+            ;;(evaluar (list 'GOTO (first (last (nth amb (indice-amb :prog-mem))))) amb) 
+            (do (dar-error 16 (amb 1)) [nil amb]))
       LET (if (= (second (rest sentencia)) '=)
              (let [resu (ejecutar-asignacion (rest sentencia) amb)]
                (if (nil? resu)
@@ -854,9 +860,6 @@
       RESTORE (if (= (count (next sentencia)) 0)
                 [:sin-errores (assoc amb (indice-amb :data-ptr) 0)]
                 (do (dar-error 16 (amb 1)) [nil amb]))
-      DATA (if (>= (count (next sentencia)) 1) ;; TODO: lo pongo para que no rompa al leer DATA al final del programa, ver si se puede dejar asi
-             [:sin-errores amb]
-             (do (dar-error 16 (amb 1)) [nil amb]))
       (if (= (second sentencia) '=)
         (let [resu (ejecutar-asignacion sentencia amb)]
           (if (nil? resu)
