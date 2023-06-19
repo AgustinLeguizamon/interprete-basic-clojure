@@ -186,14 +186,19 @@
   ;; OK
   (evaluar-linea (list (list 'IF 'L '< 1 'OR 'L '> 26 'THEN 'PRINT "??? " (symbol ";") (symbol ":") 'GOTO 190)) [() [:ejecucion-inmediata 0] [] [] [] 0 {'L 4}])
 
-  ;; SYNTAX ERROR
+  ;; OK, pero recordar que evaluar-linea recibe las 3 expresiones por separado, sin el :
   (evaluar-linea (list (list 'FOR 'J '= '1 'TO 'L (symbol ":") 'READ 'S$ (symbol ":") 'NEXT 'J)) [() [:ejecucion-inmediata 0] [] [] [] 0 {'L 4}])
   (expandir-nexts (list (list 'FOR 'J '= '1 'TO 'L (symbol ":") 'READ 'S$ (symbol ":") 'NEXT 'J)))
   (anular-invalidos (list 'FOR 'J '= '1 'TO 'L (symbol ":") 'READ 'S$ (symbol ":") 'NEXT 'J))
-  ;; no tiene READ asi que vemos de implementarlo
-  ;; tampoco tiene DATA pero al parecer no es un problema si cargas un programa 
-  
-  
+
+  ;; OVERFLOW ERROR
+  (evaluar-linea (list (list 'FOR 'A '= 0 'TO 8 '* 'ATN (symbol "(") 1 (symbol ")") 'STEP 0.1)) [() [:ejecucion-inmediata 0] [] [] [] 0 {'L 4}])
+  (expandir-nexts (list (list 'FOR 'A '= 0 'TO 8 '* 'ATN (symbol "(") 1 (symbol ")") 'STEP 0.1)))
+  (anular-invalidos (list 'FOR 'A '= 0 'TO 8 '* 'ATN (symbol "(") 1 (symbol ")") 'STEP 0.1))
+
+  (evaluar-linea (list (list 'PRINT 'INT (symbol "(") 'A '* '100 (symbol ")") '/ 100 (symbol ",") "   " (symbol ";") 'INT (symbol "(") 'SIN (symbol "(") 'A (symbol ")") '* 100000 (symbol ")") '/ 100000)) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  (anular-invalidos (list 'PRINT 'INT (symbol "(") 'A '* '100 (symbol ")") '/ 100 (symbol ",") "   " (symbol ";") 'INT (symbol "(") 'SIN (symbol "(") 'A (symbol ")") '* 100000 (symbol ")") '/ 100000))
+
   :rcf)
 
 (defn evaluar-linea
@@ -447,6 +452,16 @@
 
   ;; OK
   (calcular-expresion (list 'ASC (symbol "(") 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 1 (symbol ")") (symbol ")") '- 64) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "AMSTRONG", 'I 1}])
+
+  ;; OK
+  (calcular-expresion (list 'ATN (symbol "(") 1 (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  (calcular-expresion (list 8 '* 'ATN (symbol "(") 1 (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+
+  (calcular-expresion (list 'INT (symbol "(") 'A '* '100 (symbol ")") '/ 100 (symbol ",") "   " (symbol ";") 'INT (symbol "(") 'SIN (symbol "(") 'A (symbol ")") '* 100000 (symbol ")") '/ 100000) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+
+  ;; OK
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'INT (symbol "(") 'A '* '100 (symbol ")") '/ 100 ) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 1}]))) [:ejecucion-inmediata 0])
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'INT (symbol "(") 'SIN (symbol "(") 'A (symbol ")") '* 100000 (symbol ")") '/ 100000) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 1}]))) [:ejecucion-inmediata 0])
   
   :rcf)
 
@@ -719,13 +734,23 @@
   ;; OK
   (evaluar (list 'READ 'S$) [() [10 0] [] [] ["ALFA", "ROMEO"] 0 {'L 4}])
   (evaluar (list 'READ 'S$) [() [10 0] [] [] ["ALFA", "ROMEO"] 1 {'L 4}])
-  
+
   ;; OK
   (evaluar (list 'RESTORE) [() [10 0] [] [] ["ALFA", "ROMEO"] 1 {'L 1}])
 
   ;; TODO: por el momento lo dejo asi, pero podria hacer que agarre el array y lo meto en data-mem
   ;; ver si esto appendea o pisa lo anterior (seguro que appendea), ver si permite repetir, etc
   (evaluar (list 'DATA 'ALFA 'ROMEO) [() [10 0] [] [] [] 0 {}])
+
+  ;; OK
+  (evaluar (list 'FOR 'A '= 0 'TO 8 '* 'ATN (symbol "(") 1 (symbol ")") 'STEP 0.1) [() [:ejecucion-inmediata 0] [] [] [] 0 {}])
+  ;; es en calcular expresion con valor-final (8 * ATN (1))
+
+  ;; OK, evaluo la parte del SIN que es lo que da el error
+  (evaluar (list 'PRINT 'INT (symbol "(") 'SIN (symbol "(") 'A (symbol ")") '* 100000 (symbol ")") '/ 100000) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 1}]) 
+  
+
+
   :rcf)
 
 (defn evaluar [sentencia amb]
@@ -809,7 +834,7 @@
              [:sin-errores amb]
              (do (dar-error 16 (amb 1)) [nil amb]))
       LET (if (= (second (rest sentencia)) '=)
-             (let [resu (ejecutar-asignacion (spy "sentencia" (rest sentencia)) amb)]
+             (let [resu (ejecutar-asignacion (rest sentencia) amb)]
                (if (nil? resu)
                  [nil amb]
                  [:sin-errores resu]))
@@ -852,6 +877,8 @@
 
   (aplicar 'ASC "ABC" [])
 
+  (aplicar 'SIN 1 [])
+  
   :rcf)
 
 (defn aplicar
@@ -864,6 +891,8 @@
        STR$ (if (not (number? operando)) (dar-error 163 nro-linea) (eliminar-cero-entero operando)) ; Type mismatch error
        CHR$ (if (or (< operando 0) (> operando 255)) (dar-error 53 nro-linea) (str (char operando)))
        INT (int operando)
+       ATN (Math/atan operando)
+       SIN (Math/sin operando)
        ASC (int (first (char-array operando)))))) ; Illegal quantity error  
   ([operador operando1 operando2 nro-linea]
    (if (or (nil? operando1) (nil? operando2))
@@ -1636,6 +1665,8 @@
             MID3$ 7
             ASC 7
             INT 7
+            ATN 7
+            SIN 7
             nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

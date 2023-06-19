@@ -220,6 +220,7 @@
     (is (= (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list (symbol "(") 2 (symbol ")") '<> 1) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]))) [:ejecucion-inmediata 0]) -1))
     (is (= (calcular-expresion (list 'A '- 'INT (symbol "(") 'A '/ 'B (symbol ")") '* 'B) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 4, 'B 2}]) 0))
     (is (= (calcular-expresion (list 'ASC (symbol "(") 'MID$ (symbol "(") 'W$ (symbol ",") 'I (symbol ",") 1 (symbol ")") (symbol ")") '- 64) [() [:ejecucion-inmediata 0] [] [] [] 0 {'W$ "AMSTRONG", 'I 1}]) 1))
+    (is (= (calcular-expresion (list 8 '* 'ATN (symbol "(") 1 (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {}]) (* 8 (Math/atan 1))))
     )) 
 
 (deftest evaluar-test
@@ -228,5 +229,5 @@
     (is (= (evaluar (list 'READ 'S$) [() [10 0] [] [] ["ALFA", "ROMEO"] 1 {}]) [:sin-errores [() [10 0] [] [] ["ALFA", "ROMEO"] 2 {'S$ "ROMEO"}]]))
     (is (= (evaluar (list 'RESTORE) [() [10 0] [] [] ["ALFA", "ROMEO"] 1 {}]) [:sin-errores [() [10 0] [] [] ["ALFA", "ROMEO"] 0 {}]]) "Deberia resetear data-ptr a 0")
     (is (= (evaluar (list 'DATA 'ALFA 'ROMEO) [() [10 0] [] [] [] 0 {}]) [:sin-errores [() [10 0] [] [] [] 0 {}]]) "Deberia no hacer nada")
-    
+    (is (= (evaluar (list 'PRINT 'INT (symbol "(") 'SIN (symbol "(") 'A (symbol ")") '* 100000 (symbol ")") '/ 100000) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 1}]) [:sin-errores [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 1}]]))
     )) 
