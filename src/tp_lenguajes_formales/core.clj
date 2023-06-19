@@ -291,6 +291,11 @@
 ; por evaluar-linea) y un ambiente actualizado incluyendo las
 ; variables cargadas con los valores leidos del teclado
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(comment
+  (leer-con-enter (list 'V$) [() [] [] [] [] 0 {}]) 
+
+  :rcf)
+
 (defn leer-con-enter
   ([param-de-input amb]
    (leer-con-enter param-de-input param-de-input amb))
@@ -469,6 +474,8 @@
   
   ;; CHR$ (65 + B - 10)
   (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'CHR$ (symbol "(") 65 '+ 'B '- 10 (symbol ")")) [() [:ejecucion-inmediata 0] [] [] [] 0 {'B 12}]))) [:ejecucion-inmediata 0])
+  
+  (calcular-rpn (shunting-yard (desambiguar (preprocesar-expresion (list 'V$ '<> "") [() [:ejecucion-inmediata 0] [] [] [] 0 {'V$ "QUIT"}]))) [:ejecucion-inmediata 0])
   
   :rcf)
 
@@ -762,8 +769,7 @@
   (evaluar (list 'GOSUB 200) [(list (list 'PRINT 10)) [:ejecucion-inmediata 0] [] [] [] 0 {'A 1}])
 
   (evaluar (list 'END) [(list (list 'PRINT 10) (list 'PRINT 20)) [10 1] [] [] [] 0 {'A 1}])
-
-
+  
   :rcf)
 
 (defn evaluar [sentencia amb]
@@ -891,6 +897,8 @@
 
   (aplicar 'SIN 1 [])
   
+  (not= "hola" "hola")
+
   :rcf)
 
 (defn aplicar
@@ -922,7 +930,9 @@
        > (if (> (+ 0 operando1) (+ 0 operando2)) -1 0)
        >= (if (>= (+ 0 operando1) (+ 0 operando2)) -1 0)
        <= (if (<= (+ 0 operando1) (+ 0 operando2)) -1 0)
-       <> (if (not= (+ 0 operando1) (+ 0 operando2)) -1 0)
+       <> (if (and (string? operando1) (string? operando2))
+            (if (not= operando1 operando2) -1 0)
+            (if (not= (+ 0 operando1) (+ 0 operando2)) -1 0)) 
        / (if (= operando2 0) (dar-error 133 nro-linea) (/ operando1 operando2))  ; Division by zero error
        AND (let [op1 (+ 0 operando1), op2 (+ 0 operando2)] (if (and (not= op1 0) (not= op2 0)) -1 0))
        OR (let [op1 (+ 0 operando1), op2 (+ 0 operando2)] (if (or (= op1 -1) (= op2 -1)) -1 0))
