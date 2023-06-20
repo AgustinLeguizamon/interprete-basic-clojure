@@ -230,6 +230,6 @@
     (is (= (evaluar (list 'READ 'S$) [() [10 0] [] [] ["ALFA", "ROMEO"] 0 {}]) [:sin-errores [() [10 0] [] [] ["ALFA", "ROMEO"] 1 {'S$ "ALFA"}]]))
     (is (= (evaluar (list 'READ 'S$) [() [10 0] [] [] ["ALFA", "ROMEO"] 1 {}]) [:sin-errores [() [10 0] [] [] ["ALFA", "ROMEO"] 2 {'S$ "ROMEO"}]]))
     (is (= (evaluar (list 'RESTORE) [() [10 0] [] [] ["ALFA", "ROMEO"] 1 {}]) [:sin-errores [() [10 0] [] [] ["ALFA", "ROMEO"] 0 {}]]) "Deberia resetear data-ptr a 0")
-    ;; (is (= (evaluar (list 'DATA 'ALFA 'ROMEO) [() [10 0] [] [] [] 0 {}]) [:sin-errores [() [10 0] [] [] [] 0 {}]]) "Deberia no hacer nada")
     (is (= (evaluar (list 'PRINT 'INT (symbol "(") 'SIN (symbol "(") 'A (symbol ")") '* 100000 (symbol ")") '/ 100000) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 1}]) [:sin-errores [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 1}]]))
+    (is (= (evaluar (list 'CLEAR) [() [:ejecucion-inmediata 0] [] [] [] 0 {'A 1}]) [:sin-errores [() [:ejecucion-inmediata 0] [] [] [] 0 {}]]))
     )) 

@@ -545,6 +545,8 @@
              (do (dar-error 201 (amb 1)) [nil amb]))  ; Save within program error
       REM [:omitir-restante amb]
       NEW [:sin-errores ['() [:ejecucion-inmediata 0] [] [] [] 0 {}]]  ; [(prog-mem)  [prog-ptrs]  [gosub-return-stack]  [for-next-stack]  [data-mem]  data-ptr  {var-mem}]
+      CLEAR [:sin-errores (assoc amb (indice-amb :hash-map) {})]  ; [(prog-mem)  [prog-ptrs]  [gosub-return-stack]  [for-next-stack]  [data-mem]  data-ptr  {var-mem}]
+      LIST (do (prn (amb 0)) (flush) [:sin-errores amb])
       RUN (cond
             (empty? (amb 0)) [:sin-errores amb]  ; no hay programa
             (= (count sentencia) 1) (ejecutar-programa (assoc amb 1 [(ffirst (amb 0)) (count (expandir-nexts (nfirst (amb 0))))]))  ; no hay argumentos   
@@ -606,11 +608,11 @@
             ;;(evaluar (list 'GOTO (first (last (nth amb (indice-amb :prog-mem))))) amb) 
             (do (dar-error 16 (amb 1)) [nil amb]))
       LET (if (= (second (rest sentencia)) '=)
-             (let [resu (ejecutar-asignacion (rest sentencia) amb)]
-               (if (nil? resu)
-                 [nil amb]
-                 [:sin-errores resu]))
-             (do (dar-error 16 (amb 1)) [nil amb]))
+            (let [resu (ejecutar-asignacion (rest sentencia) amb)]
+              (if (nil? resu)
+                [nil amb]
+                [:sin-errores resu]))
+            (do (dar-error 16 (amb 1)) [nil amb]))
       READ (if (>= (count (next sentencia)) 1)
              (leer-data (next sentencia) amb)
              (do (dar-error 16 (amb 1)) [nil amb]))
